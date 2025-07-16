@@ -12,6 +12,11 @@ import { RouterModule } from '@angular/router';
                         loadChildren: () => import('./dashboard/dashboard.module').then((m) => m.DashboardModule),
                         data: { permission: 'Pages.Tenant.Dashboard' },
                     },
+                    {
+                        path: 'customers',
+                        loadChildren: () => import('./customers/customers/customers.module').then(m => m.CustomersModule)
+                    },
+
                     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
                     { path: '**', redirectTo: 'dashboard' },
                 ],

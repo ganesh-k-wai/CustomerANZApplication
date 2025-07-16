@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <localizationDictionary culture="tr">
   <texts>
-    <text name="HomePage">Ana sayfa</text>
+	  <text name="Customers">Customers</text>
+	  <text name="HomePage">Ana sayfa</text>
     <text name="AboutUs">Hakkımızda</text>
     <text name="Administration">Yönetim</text>
     <text name="Roles">Roller</text>

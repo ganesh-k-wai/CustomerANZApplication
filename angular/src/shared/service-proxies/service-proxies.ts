@@ -4063,6 +4063,43 @@ export class DynamicPropertyValueServiceProxy {
         return _observableOf<DynamicPropertyValueDto>(<any>null);
     }
 
+    // -----
+    export class CustomerService {
+  private baseUrl = AppConsts.remoteServiceBaseUrl + '/api/services/app/Customer';
+
+  constructor(private http: HttpClient) {}
+
+  getAll(filter: string, skipCount: number, maxResultCount: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/GetAll`, {
+      params: {
+        Filter: filter,
+        SkipCount: skipCount.toString(),
+        MaxResultCount: maxResultCount.toString()
+      }
+    });
+  }
+
+  getCustomerForEdit(id: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/GetCustomerForEdit`, {
+      params: { id: id.toString() }
+    });
+  }
+
+  createOrEdit(input: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/CreateOrEdit`, input);
+  }
+
+  delete(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/Delete`, {
+      params: { id: id.toString() }
+    });
+  }
+
+  getUnassignedUsers(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/GetUnassignedUsers`);
+  }
+}
+    // -----
     /**
      * @param id (optional) 
      * @return Success
@@ -10913,7 +10950,7 @@ export class TenantRegistrationServiceProxy {
     private http: HttpClient;
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
+     providedIn: 'root'
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
         this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "";

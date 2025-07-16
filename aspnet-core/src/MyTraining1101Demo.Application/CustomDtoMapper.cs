@@ -25,6 +25,8 @@ using MyTraining1101Demo.Authorization.Users.Importing.Dto;
 using MyTraining1101Demo.Authorization.Users.Profile.Dto;
 using MyTraining1101Demo.Chat;
 using MyTraining1101Demo.Chat.Dto;
+using MyTraining1101Demo.Customers;
+using MyTraining1101Demo.Customers.Dtos;
 using MyTraining1101Demo.DynamicEntityProperties.Dto;
 using MyTraining1101Demo.Editions;
 using MyTraining1101Demo.Editions.Dto;
@@ -41,6 +43,7 @@ using MyTraining1101Demo.Notifications.Dto;
 using MyTraining1101Demo.Organizations.Dto;
 using MyTraining1101Demo.Sessions.Dto;
 using MyTraining1101Demo.WebHooks.Dto;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace MyTraining1101Demo
 {
@@ -164,6 +167,15 @@ namespace MyTraining1101Demo
             configuration.CreateMap<CreateUserDelegationDto, UserDelegation>();
 
             /* ADD YOUR OWN CUSTOM AUTOMAPPER MAPPINGS HERE */
+
+
+            configuration.CreateMap<Customer, CustomerDto>()
+                      .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
+
+            configuration.CreateMap<Customer, CreateOrEditCustomerDto>();
+            configuration.CreateMap<CreateOrEditCustomerDto, Customer>();
+            
+
         }
     }
 }
