@@ -2,8 +2,11 @@
 
 namespace MyTraining1101Demo.Customers.Dtos
 {
-    public class UserLookupDto : EntityDto<long>
+    public class UserLookupDto
     {
+        public long Id { get; set; }
         public string UserName { get; set; }
+        public string Name { get; set; }  
     }
+
 }

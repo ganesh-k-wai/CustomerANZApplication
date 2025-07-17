@@ -11,7 +11,8 @@ import { appModuleAnimation } from '@shared/animations/routerTransition';
 import {
   CreateOrEditCustomerDto,
   CustomerDto,
-  CustomerServiceProxy
+  CustomerServiceProxy,
+  UserLookupDto
 } from '@shared/service-proxies/service-proxies';
 import { finalize } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -31,6 +32,7 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   maxResultCount = 5;
   totalCount = 0;
   Math = Math;
+  availableUsers: UserLookupDto[] = [];
 
 
    // Date picker configuration

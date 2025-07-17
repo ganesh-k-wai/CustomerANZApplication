@@ -117,20 +117,25 @@ namespace MyTraining1101Demo.Customers
         {
             var assignedUserIds = await _customerRepository
                 .GetAll()
-                .Where(c => c.UserId != null)
+                .Where(c => c.UserId != null && !c.IsDeleted)
                 .Select(c => c.UserId.Value)
                 .ToListAsync();
 
             var unassignedUsers = await _userRepository
                 .GetAll()
-                .Where(u => !assignedUserIds.Contains(u.Id))
+                .Where(u => !assignedUserIds.Contains(u.Id) && !u.IsDeleted)
+                .Select(u => new UserLookupDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Name = u.Name + " " + u.Surname 
+                })
                 .ToListAsync();
 
-            return unassignedUsers.Select(u => new UserLookupDto
-            {
-                Id = u.Id,
-                UserName = u.UserName
-            }).ToList();
+            return unassignedUsers;
         }
+
+
+
     }
 }
