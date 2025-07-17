@@ -31,7 +31,7 @@
             <table class="table table-hover table-striped">
               <thead class="thead-light">
                 <tr>
-                  <th>ID</th>
+                  <th>Sr No</th>
                   <th>Name</th>
                   <th>Email</th>
                   <th>Address</th>
@@ -40,8 +40,8 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let customer of customers">
-                  <td>{{ customer.id }}</td>
+                <tr *ngFor="let customer of customers; let i=index">
+                  <td>{{ skipCount +i + 1 }}</td>
                   <td>{{ customer.name }}</td>
                   <td>{{ customer.email }}</td>
                   <td>{{ customer.address }}</td>

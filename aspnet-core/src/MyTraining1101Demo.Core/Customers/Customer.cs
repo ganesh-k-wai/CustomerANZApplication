@@ -1,16 +1,16 @@
 ﻿using Abp.Domain.Entities;
+using Abp.Domain.Entities.Auditing;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using MyTraining1101Demo.Authorization.Users;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
-
-using MyTraining1101Demo.Authorization.Users;
 
 
 
 namespace MyTraining1101Demo.Customers
 {
         [Table("Customers")]
-    public class Customer : Entity
+    public class Customer : FullAuditedEntity
     {
         public string Name { get; set; }
         public string Email { get; set; }
