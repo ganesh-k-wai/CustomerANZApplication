@@ -4,13 +4,19 @@ import {
   OnInit,
   ViewChild
 } from '@angular/core';
+
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AppComponentBase } from '@shared/common/app-component-base';
 import { appModuleAnimation } from '@shared/animations/routerTransition';
 import {
+  CreateOrEditCustomerDto,
   CustomerDto,
   CustomerServiceProxy
 } from '@shared/service-proxies/service-proxies';
-import { CreateOrEditCustomerModalComponent } from './create-or-edit-customer-modal.component';
+import { finalize } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
+declare var $: any;
 
 @Component({
   selector: 'app-customers',
@@ -26,22 +32,138 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   totalCount = 0;
   Math = Math;
 
-  @ViewChild('customerModal', { static: true })
-  customerModal: CreateOrEditCustomerModalComponent;
+
+   // Date picker configuration
+  datePickerConfig: Partial<BsDatepickerConfig> = {
+    containerClass: 'theme-default',
+    showWeekNumbers: false,
+    dateInputFormat: 'YYYY-MM-DD'
+  };
+  
+  customerForm: FormGroup;
+  isEditMode = false;
+  saving = false;
+  currentCustomerId: number | null = null;
 
   constructor(
     injector: Injector,
-    private _customerService: CustomerServiceProxy
+    private _customerService: CustomerServiceProxy,
+    private _formBuilder: FormBuilder
   ) {
     super(injector);
   }
 
   ngOnInit(): void {
     this.getCustomers();
+    this.initializeForm();
   }
 
- show(id: number | null): void {
-    throw new Error('Method not implemented.');
+  initializeForm(): void {
+    this.customerForm = this._formBuilder.group({
+      name: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      registrationDate:[''],
+      phoneNo: ['', [Validators.required]],
+      address: ['']
+    });
+  }
+
+  show(id: number | null): void {
+    this.currentCustomerId = id;
+    this.isEditMode = id !== null;
+    
+    if (id) {
+      this.saving = true;
+      this._customerService.getCustomerForEdit(id)
+        .pipe(finalize(() => this.saving = false))
+        .subscribe(result => {
+          // Convert DateTime to JavaScript Date
+          let registrationDate = null;
+          if (result.customer.registrationDate) {
+            // If it's a DateTime object, convert to JS Date
+            if (result.customer.registrationDate.toJSDate) {
+              registrationDate = result.customer.registrationDate.toJSDate();
+            } else if (result.customer.registrationDate.toJSDate) {
+              registrationDate = result.customer.registrationDate.toJSDate();
+            } else {
+              // Fallback: treat as string/ISO date
+              registrationDate = new Date(result.customer.registrationDate.toString());
+            }
+          }
+
+          this.customerForm.patchValue({
+            name: result.customer.name,
+            email: result.customer.email,
+            registrationDate: registrationDate,
+            phoneNo: result.customer.phoneNo,
+            address: result.customer.address
+          });
+          this.showModal();
+        });
+    } else {
+      this.customerForm.reset();
+      this.showModal();
+    }
+  }
+
+
+  private showModal(): void {
+  if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+    $('#customerModal').modal('show');
+  } else {
+    const modalElement = document.getElementById('customerModal');
+    if (modalElement) {
+      modalElement.classList.add('show');
+      modalElement.style.display = 'block';
+      modalElement.setAttribute('aria-modal', 'true');
+      modalElement.removeAttribute('aria-hidden');
+    }
+  }
+}
+
+  private hideModal(): void {
+  if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+    $('#customerModal').modal('hide');
+  } else {
+    const modalElement = document.getElementById('customerModal');
+    if (modalElement) {
+      modalElement.classList.remove('show');
+      modalElement.style.display = 'none';
+      modalElement.removeAttribute('aria-modal');
+      modalElement.setAttribute('aria-hidden', 'true');
+    }
+  }
+  }
+  
+  
+save(): void {
+    if (this.customerForm.invalid) {
+      return;
+    }
+
+    this.saving = true;
+    const customerDto = new CreateOrEditCustomerDto();
+    customerDto.id = this.currentCustomerId || undefined;
+    customerDto.name = this.customerForm.get('name').value;
+    customerDto.email = this.customerForm.get('email').value;
+  customerDto.phoneNo = this.customerForm.get('phoneNo').value;
+  
+
+    const registrationDate = this.customerForm.get('registrationDate').value;
+    customerDto.registrationDate = registrationDate;
+      
+    customerDto.address = this.customerForm.get('address').value;
+    this._customerService.createOrEdit(customerDto)
+      .pipe(finalize(() => this.saving = false))
+      .subscribe(() => {
+        if (this.isEditMode) {
+          this.notify.success('Customer updated successfully');
+        } else {
+          this.notify.success('Customer created successfully');
+        }
+        this.hideModal();
+        this.getCustomers();
+      });
   }
 
   getCustomers(): void {
@@ -58,19 +180,15 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
     this.getCustomers();
   }
 
-  changePage(event: any): void {
-    this.skipCount = event.pageIndex * event.pageSize;
-    this.maxResultCount = event.pageSize;
+  nextPage(): void {
+    this.skipCount += this.maxResultCount;
+    this.getCustomers();
+  }
+   previousPage(): void {
+    this.skipCount = Math.max(0, this.skipCount - this.maxResultCount);
     this.getCustomers();
   }
 
-  createCustomer(): void {
-    this.customerModal.show(null); // null means create
-  }
-
-  editCustomer(id): void {
-    this.customerModal.show(id); 
-  }
 
   deleteCustomer(id: number): void {
     this.message.confirm('Are you sure you want to delete?', 'Confirm', result => {
@@ -85,6 +203,5 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
 
   viewUsers(id: number): void {
     this.message.info('This will show the associated users for customer ID: ' + id);
-    // Optional: open a Bootstrap modal to show related user info
   }
 }

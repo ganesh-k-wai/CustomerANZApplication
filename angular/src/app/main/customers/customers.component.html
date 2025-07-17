@@ -1,75 +1,164 @@
-<div class="card">
-  <div class="card-body">
-    <div class="row mb-3">
-      <div class="col-md-5">
-        <input
-          [(ngModel)]="keyword"
-          (keyup.enter)="onSearch()"
-          class="form-control"
-          placeholder="Search by name, email, or address"
-        />
-      </div>
-      <div class="col-md-7 text-end">
-        <button class="btn btn-primary me-2" (click)="onSearch()">Search</button>
-        <button class="btn btn-success" (click)="createCustomer()">+ Add Customer</button>
+<div [@routerTransition]>
+  <div class="content d-flex flex-column flex-column-fluid">
+    <!-- Replace sub-header with standard div -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <h1 class="kt-subheader__title">{{ 'Customers' | localize }}</h1>
+      <div>
+        <button class="btn btn-primary" (click)="show(null)">
+          <i class="fa fa-plus"></i> {{ 'Create' | localize }}
+        </button>
       </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Address</th>
-            <th>Registration Date</th>
-            <th>User</th>
-            <th style="width: 120px">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let customer of customers">
-            <td>{{ customer.name }}</td>
-            <td>{{ customer.email }}</td>
-            <td>{{ customer.phoneNo }}</td>
-            <td>{{ customer.address }}</td>
-            <td>{{ customer.registrationDate | date: 'shortDate' }}</td>
-            <td>{{ customer.userName }}</td>
-            <td>
-              <button class="btn btn-sm btn-info me-1" (click)="editCustomer(customer.id)">✏️</button>
-              <button class="btn btn-sm btn-danger me-1" (click)="deleteCustomer(customer.id)">🗑️</button>
-              <button class="btn btn-sm btn-secondary" (click)="viewUsers(customer.id)">👁️</button>
-            </td>
-          </tr>
-          <tr *ngIf="customers.length === 0">
-            <td colspan="7" class="text-center py-3">No records found.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="container-fluid">
+      <div class="card card-custom">
+        <div class="card-body">
+          <!-- Search Form -->
+          <div class="form-group mb-4">
+            <div class="input-group">
+              <input type="text" class="form-control" [(ngModel)]="keyword" placeholder="Search by name or email..."
+                (keyup.enter)="onSearch()">
+              <div class="input-group-append">
+                <button class="btn btn-primary" type="button" (click)="onSearch()">
+                  <i class="fa fa-search"></i> Search
+                </button>
+              </div>
+            </div>
+          </div>
 
-    <!-- Pagination Controls -->
-    <nav class="mt-3" *ngIf="totalCount > maxResultCount">
-      <ul class="pagination justify-content-center">
-        <li class="page-item" [class.disabled]="skipCount === 0">
-          <button class="page-link" (click)="changePage({pageIndex: 0, pageSize: maxResultCount})">First</button>
-        </li>
-        <li class="page-item" [class.disabled]="skipCount === 0">
-          <button class="page-link" (click)="changePage({pageIndex: (skipCount/maxResultCount)-1, pageSize: maxResultCount})">Previous</button>
-        </li>
-        <li class="page-item disabled">
-          <span class="page-link">
-            Page {{ (skipCount/maxResultCount)+1 }} of {{ Math.ceil(totalCount/maxResultCount) }}
-          </span>
-        </li>
-        <li class="page-item" [class.disabled]="skipCount + maxResultCount >= totalCount">
-          <button class="page-link" (click)="changePage({pageIndex: (skipCount/maxResultCount)+1, pageSize: maxResultCount})">Next</button>
-        </li>
-        <li class="page-item" [class.disabled]="skipCount + maxResultCount >= totalCount">
-          <button class="page-link" (click)="changePage({pageIndex: Math.ceil(totalCount/maxResultCount)-1, pageSize: maxResultCount})">Last</button>
-        </li>
-      </ul>
-    </nav>
+          <!-- Customer Table -->
+          <div class="table-responsive">
+            <table class="table table-hover table-striped">
+              <thead class="thead-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Address</th>
+                  <th>Registration Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let customer of customers">
+                  <td>{{ customer.id }}</td>
+                  <td>{{ customer.name }}</td>
+                  <td>{{ customer.email }}</td>
+                  <td>{{ customer.address }}</td>
+                  <td>{{ customer.registrationDate | date:'medium' }}</td>
+                  <td>
+                    <button class="btn btn-sm btn-primary mr-1" (click)="show(customer.id)">
+                      <i class="fa fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-info mr-1" (click)="viewUsers(customer.id)">
+                      <i class="fa fa-users"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" (click)="deleteCustomer(customer.id)">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- No Record Found Message -->
+          <div *ngIf="customers.length === 0" class="text-center p-4">
+            <p>No customer records found</p>
+          </div>
+
+          <!-- Replace mat-paginator with Bootstrap pagination -->
+          <nav aria-label="Customer pagination" *ngIf="totalCount > 0">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span>Showing {{ skipCount + 1 }} to {{ Math.min(skipCount + maxResultCount, totalCount) }} of {{
+                  totalCount }} entries</span>
+              </div>
+              <div>
+                <div class="btn-group" role="group">
+                  <button class="btn btn-outline-primary" [disabled]="skipCount === 0" (click)="previousPage()">
+                    <i class="fa fa-chevron-left"></i> Previous
+                  </button>
+                  <button class="btn btn-outline-primary" [disabled]="skipCount + maxResultCount >= totalCount"
+                    (click)="nextPage()">
+                    Next <i class="fa fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Customer Create/Edit Modal -->
+<div class="modal fade" id="customerModal" tabindex="-1" role="dialog" aria-labelledby="customerModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="customerModalLabel">{{ isEditMode ? 'Edit Customer' : 'Create Customer' }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form *ngIf="customerForm" [formGroup]="customerForm" (ngSubmit)="save()">
+        <div class="modal-body">
+          <!-- Name -->
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" class="form-control" id="name" formControlName="name">
+            <div
+              *ngIf="customerForm.controls['name'].invalid && (customerForm.controls['name'].dirty || customerForm.controls['name'].touched)"
+              class="text-danger">
+              <small *ngIf="customerForm.controls['name'].errors?.['required']">Name is required</small>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" formControlName="email">
+            <div
+              *ngIf="customerForm.controls['email'].invalid && (customerForm.controls['email'].dirty || customerForm.controls['email'].touched)"
+              class="text-danger">
+              <small *ngIf="customerForm.controls['email'].errors?.['required']">Email is required</small>
+              <small *ngIf="customerForm.controls['email'].errors?.['email']">Please enter a valid email</small>
+            </div>
+          </div>
+          <!-- Registration Date -->
+          <div class="form-group">
+            <label for="registrationDate">Registration Date</label>
+            <input type="text" class="form-control" id="registrationDate" formControlName="registrationDate"
+              bsDatepicker [bsConfig]="datePickerConfig" placeholder="Select date" readonly>
+          </div>
+          <!-- Phone -->
+          <div class="form-group">
+            <label for="phoneNo">Phone No</label>
+            <input type="tel" class="form-control" id="phoneNo" formControlName="phoneNo">
+            <div
+              *ngIf="customerForm.controls['phoneNo'].invalid && (customerForm.controls['phoneNo'].dirty || customerForm.controls['phoneNo'].touched)"
+              class="text-danger">
+              <small *ngIf="customerForm.controls['phoneNo'].errors?.['required']">Phone number is required</small>
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="form-group">
+            <label for="address">Address</label>
+            <textarea class="form-control" id="address" formControlName="address" rows="3"></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="!customerForm.valid || saving">
+            <i class="fa fa-spin fa-spinner" *ngIf="saving"></i> Save
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>

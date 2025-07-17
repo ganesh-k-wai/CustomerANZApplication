@@ -17,7 +17,10 @@ export class SignalRHelper {
                 remoteServiceBaseUrl: AppConsts.remoteServiceBaseUrl,
                 startConnection: undefined,
                 url: '/signalr',
+                withUrlOptions: undefined, 
             };
+
+         
 
             let script = document.createElement('script');
             script.onload = () => {

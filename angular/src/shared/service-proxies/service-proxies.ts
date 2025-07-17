@@ -1806,6 +1806,9 @@ export class CommonLookupServiceProxy {
 
 @Injectable()
 export class CustomerServiceProxy {
+    get(id: number) {
+      throw new Error('Method not implemented.');
+    }
     private http: HttpClient;
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
