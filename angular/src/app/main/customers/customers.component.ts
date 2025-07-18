@@ -20,6 +20,7 @@ import { finalize } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { AppConsts } from '@shared/AppConsts';
+import { HttpClient } from '@angular/common/http';
 declare var $: any;
 
 @Component({
@@ -50,14 +51,13 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   isEditMode = false;
   saving = false;
   currentCustomerId: number | null = null;
-  http: any;
 
   constructor(
     injector: Injector,
     private _customerService: CustomerServiceProxy,
     private _formBuilder: FormBuilder,
-     private _userService: UserServiceProxy,
- 
+    private _userService: UserServiceProxy,
+    private http: HttpClient
   ) {
     super(injector);
   }
@@ -92,9 +92,8 @@ loadAllUsers(): void {
   userInput.skipCount = 0;
   userInput.maxResultCount = 1000;
   
-  this.http.post(url, userInput)
-    .subscribe(result => {
-      // Make sure you're accessing the correct property path
+  this.http.post<any>(url, userInput)
+    .subscribe((result: any) => {
       this.allUsers = result.result?.items || [];
       this.updateAvailableUsers();
     }, error => {
@@ -152,24 +151,19 @@ loadAllUsers(): void {
   show(id: number | null): void {
     this.currentCustomerId = id;
     this.isEditMode = id !== null;
-    
+    this.selectedUserIds = [];
+
     if (id) {
       this.saving = true;
       this._customerService.getCustomerForEdit(id)
         .pipe(finalize(() => this.saving = false))
         .subscribe(result => {
-          // Convert DateTime to JavaScript Date
+
+          this.selectedUserIds = result.assignedUserIds || [];
+
           let registrationDate = null;
           if (result.customer.registrationDate) {
-            // If it's a DateTime object, convert to JS Date
-            if (result.customer.registrationDate.toJSDate) {
-              registrationDate = result.customer.registrationDate.toJSDate();
-            } else if (result.customer.registrationDate.toJSDate) {
-              registrationDate = result.customer.registrationDate.toJSDate();
-            } else {
-              // Fallback: treat as string/ISO date
-              registrationDate = new Date(result.customer.registrationDate.toString());
-            }
+            registrationDate = new Date(result.customer.registrationDate.toString());
           }
 
           this.customerForm.patchValue({
@@ -179,42 +173,28 @@ loadAllUsers(): void {
             phoneNo: result.customer.phoneNo,
             address: result.customer.address
           });
+          this.updateAvailableUsers();
           this.showModal();
         });
     } else {
       this.customerForm.reset();
-      this.selectedUserIds = [];
       this.updateAvailableUsers();
       this.showModal();
     }
   }
 
-  private showModal(): void {
-  if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
-    $('#customerModal').modal('show');
-  } else {
-    const modalElement = document.getElementById('customerModal');
-    if (modalElement) {
-      modalElement.classList.add('show');
-      modalElement.style.display = 'block';
-      modalElement.setAttribute('aria-modal', 'true');
-      modalElement.removeAttribute('aria-hidden');
-    }
+ private showModal(): void {
+    setTimeout(() => {
+      if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+        $('#customerModal').modal('show');
+      }
+    }, 100);
   }
-}
 
   private hideModal(): void {
-  if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
-    $('#customerModal').modal('hide');
-  } else {
-    const modalElement = document.getElementById('customerModal');
-    if (modalElement) {
-      modalElement.classList.remove('show');
-      modalElement.style.display = 'none';
-      modalElement.removeAttribute('aria-modal');
-      modalElement.setAttribute('aria-hidden', 'true');
+    if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+      $('#customerModal').modal('hide');
     }
-  }
   }
   
   save(): void {
@@ -234,7 +214,7 @@ loadAllUsers(): void {
     customerDto.registrationDate = registrationDate;
       
     customerDto.address = this.customerForm.get('address').value;
-    customerDto.userId = this.selectedUserIds.length > 0 ? this.selectedUserIds[0] : undefined;
+    customerDto.userIds = this.selectedUserIds;
 
     this._customerService.createOrEdit(customerDto)
       .pipe(finalize(() => this.saving = false))
@@ -244,10 +224,19 @@ loadAllUsers(): void {
         } else {
           this.notify.success('Customer created successfully');
         }
-        this.hideModal();
+        this.cancel(); 
         this.getCustomers();
           this.loadAllUsers(); 
       });
+  }
+
+  cancel(): void {
+    this.customerForm.reset();
+    this.currentCustomerId = null;
+    this.isEditMode = false;
+    this.saving = false;
+    this.selectedUserIds = [];
+    this.hideModal();
   }
 
   getCustomers(): void {
@@ -291,9 +280,10 @@ loadAllUsers(): void {
   }
 
   getSelectedUserNames(): string {
-    if (this.selectedUserIds.length === 0) return 'None selected';
-    
-    const selectedUsers = this.availableUsers.filter(user => 
+     if (this.selectedUserIds.length === 0) {
+      return '';
+    }
+     const selectedUsers = this.availableUsers.filter(user => 
       this.selectedUserIds.includes(user.id)
     );
     

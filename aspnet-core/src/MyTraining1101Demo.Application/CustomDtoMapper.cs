@@ -169,12 +169,15 @@ namespace MyTraining1101Demo
             /* ADD YOUR OWN CUSTOM AUTOMAPPER MAPPINGS HERE */
 
 
-            configuration.CreateMap<Customer, CustomerDto>()
-                      .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
+            configuration.CreateMap<Customer, CustomerDto>();
 
-            configuration.CreateMap<Customer, CreateOrEditCustomerDto>();
-            configuration.CreateMap<CreateOrEditCustomerDto, Customer>();
-            
+            // Existing mappings remain the same
+            configuration.CreateMap<Customer, CreateOrEditCustomerDto>()
+                .ForMember(dest => dest.UserIds, opt => opt.MapFrom(src => src.UserIdsList));
+
+            configuration.CreateMap<CreateOrEditCustomerDto, Customer>()
+                .ForMember(dest => dest.UserIdsList, opt => opt.MapFrom(src => src.UserIds));
+
 
         }
     }

@@ -2,16 +2,17 @@
 using Abp.Application.Services.Dto;
 using Abp.Collections.Extensions;
 using Abp.Domain.Repositories;
+using Abp.Linq.Extensions;
 using Abp.ObjectMapping;
 using Abp.UI;
 using Microsoft.EntityFrameworkCore;
 using MyTraining1101Demo.Authorization.Users;
 using MyTraining1101Demo.Customers.Dtos;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Abp.Linq.Extensions;
 namespace MyTraining1101Demo.Customers
 {
     public class CustomerAppService : ApplicationService, ICustomerAppService
@@ -37,12 +38,12 @@ namespace MyTraining1101Demo.Customers
             {
                 var filter = input.Filter?.Trim() ?? string.Empty;
 
-                var query = (_customerRepository
-                .GetAllIncluding(c => c.User))
-                .WhereIf(!string.IsNullOrWhiteSpace(filter),
-                    c => c.Name.Contains(filter) ||
-                         c.Email.Contains(filter) ||
-                         c.Address.Contains(filter));
+                // Remove the .GetAllIncluding(c => c.User) since we don't have User navigation property anymore
+                var query = _customerRepository.GetAll()
+                    .WhereIf(!string.IsNullOrWhiteSpace(filter),
+                        c => c.Name.Contains(filter) ||
+                             c.Email.Contains(filter) ||
+                             c.Address.Contains(filter));
 
                 var totalCount = await query.CountAsync();
 
@@ -54,9 +55,62 @@ namespace MyTraining1101Demo.Customers
 
                 var customerDtos = ObjectMapper.Map<List<CustomerDto>>(customers);
 
+                // Get all user IDs and fetch user data in batch
+                var allUserIds = new List<long>();
+                foreach (var customer in customers)
+                {
+                    if (!string.IsNullOrEmpty(customer.UserIds))
+                    {
+                        try
+                        {
+                            var userIds = JsonConvert.DeserializeObject<List<long>>(customer.UserIds);
+                            allUserIds.AddRange(userIds);
+                        }
+                        catch
+                        {
+                            // Handle invalid JSON gracefully
+                        }
+                    }
+                }
+
+                // Fetch all users in one query
+                var users = new Dictionary<long, string>();
+                if (allUserIds.Any())
+                {
+                    var userList = await _userRepository
+                        .GetAll()
+                        .Where(u => allUserIds.Contains(u.Id))
+                        .Select(u => new { u.Id, u.UserName })
+                        .ToListAsync();
+
+                    users = userList.ToDictionary(u => u.Id, u => u.UserName);
+                }
+
+                // Map user names to customer DTOs
                 foreach (var dto in customerDtos)
                 {
-                    dto.UserName = customers.FirstOrDefault(x => x.Id == dto.Id)?.User?.UserName;
+                    var customer = customers.FirstOrDefault(c => c.Id == dto.Id);
+                    if (customer != null && !string.IsNullOrEmpty(customer.UserIds))
+                    {
+                        try
+                        {
+                            var userIds = JsonConvert.DeserializeObject<List<long>>(customer.UserIds);
+                            var userNames = userIds
+                                .Where(id => users.ContainsKey(id))
+                                .Select(id => users[id])
+                                .ToList();
+
+                            dto.UserNames = string.Join(", ", userNames); // Show multiple user names
+                        }
+                        catch
+                        {
+                            dto.UserNames = ""; // Handle invalid JSON
+                        }
+                    }
+                    else
+                    {
+                        dto.UserNames = "";
+                    }
                 }
 
                 return new PagedResultDto<CustomerDto>(totalCount, customerDtos);
@@ -68,42 +122,66 @@ namespace MyTraining1101Demo.Customers
         }
 
         // GET: /api/services/app/Customer/GetCustomerForEdit?id=1
-        public async Task<GetCustomerForEditOutput> GetCustomerForEdit(EntityDto input)
+        public async Task<GetCustomerForEditOutput> GetCustomerForEdit(int id)
         {
-            var customer = await _customerRepository.FirstOrDefaultAsync(input.Id);
-            var output = new GetCustomerForEditOutput
+            var customer = await _customerRepository.GetAsync(id);
+
+            return new GetCustomerForEditOutput
             {
-                Customer = ObjectMapper.Map<CreateOrEditCustomerDto>(customer)
+                Customer = new CreateOrEditCustomerDto
+                {
+                    Id = customer.Id,
+                    Name = customer.Name,
+                    Email = customer.Email,
+                    RegistrationDate = customer.RegistrationDate,
+                    PhoneNo = customer.PhoneNo,
+                    Address = customer.Address,
+                    UserIds = customer.UserIdsList // Convert from JSON to List
+                },
+                AssignedUserIds = customer.UserIdsList
             };
-            return output;
         }
 
         // POST: /api/services/app/Customer/CreateOrEdit
         public async Task CreateOrEdit(CreateOrEditCustomerDto input)
         {
-            if (input.Id == null || input.Id == 0)
+            if (input.Id.HasValue)
             {
-                await Create(input);
+                await UpdateCustomer(input);
             }
             else
             {
-                await Update(input);
+                await CreateCustomer(input);
             }
         }
 
-        private async Task Create(CreateOrEditCustomerDto input)
+        private async Task CreateCustomer(CreateOrEditCustomerDto input)
         {
-            var customer = ObjectMapper.Map<Customer>(input);
+            var customer = new Customer
+            {
+                Name = input.Name,
+                Email = input.Email,
+                RegistrationDate = input.RegistrationDate,
+                PhoneNo = input.PhoneNo,
+                Address = input.Address,
+                UserIdsList = input.UserIds // This will convert to JSON automatically
+            };
+
             await _customerRepository.InsertAsync(customer);
         }
 
-        private async Task Update(CreateOrEditCustomerDto input)
+        private async Task UpdateCustomer(CreateOrEditCustomerDto input)
         {
-            var customer = await _customerRepository.FirstOrDefaultAsync((int)input.Id);
-            if (customer == null)
-                throw new UserFriendlyException("Customer not found");
+            var customer = await _customerRepository.GetAsync(input.Id.Value);
 
-            ObjectMapper.Map(input, customer);
+            customer.Name = input.Name;
+            customer.Email = input.Email;
+            customer.RegistrationDate = input.RegistrationDate;
+            customer.PhoneNo = input.PhoneNo;
+            customer.Address = input.Address;
+            customer.UserIdsList = input.UserIds; // Update user IDs
+
+            await _customerRepository.UpdateAsync(customer);
         }
 
         // DELETE: /api/services/app/Customer/Delete?id=1
@@ -115,27 +193,32 @@ namespace MyTraining1101Demo.Customers
         // GET: /api/services/app/Customer/GetUnassignedUsers
         public async Task<List<UserLookupDto>> GetUnassignedUsers()
         {
-            var assignedUserIds = await _customerRepository
-                .GetAll()
-                .Where(c => c.UserId != null && !c.IsDeleted)
-                .Select(c => c.UserId.Value)
-                .ToListAsync();
+            // Get all assigned user IDs from all customers
+            var allCustomers = await _customerRepository.GetAllListAsync();
+            var assignedUserIds = new List<long>();
 
+            foreach (var customer in allCustomers)
+            {
+                assignedUserIds.AddRange(customer.UserIdsList);
+            }
+
+            // Get users not in assigned list
             var unassignedUsers = await _userRepository
                 .GetAll()
-                .Where(u => !assignedUserIds.Contains(u.Id) && !u.IsDeleted)
+                .Where(u => !assignedUserIds.Contains(u.Id))
                 .Select(u => new UserLookupDto
                 {
                     Id = u.Id,
                     UserName = u.UserName,
-                    Name = u.Name + " " + u.Surname 
+                    Name = u.Name,
+                    Surname = u.Surname,
+                    EmailAddress = u.EmailAddress
                 })
                 .ToListAsync();
 
             return unassignedUsers;
         }
 
-
-
+        
     }
 }

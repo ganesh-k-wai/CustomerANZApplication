@@ -1,5 +1,6 @@
 ﻿using Abp.Application.Services.Dto;
 using System;
+using System.Collections.Generic;
 
 namespace MyTraining1101Demo.Customers.Dtos
 {
@@ -10,6 +11,6 @@ namespace MyTraining1101Demo.Customers.Dtos
         public string PhoneNo { get; set; }
         public string Address { get; set; }
         public DateTime? RegistrationDate { get; set; }
-        public long? UserId { get; set; }
+        public List<long> UserIds { get; set; } = new List<long>();
     }
 }

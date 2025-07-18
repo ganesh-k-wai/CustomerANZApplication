@@ -1897,7 +1897,7 @@ export class CustomerServiceProxy {
         if (id === null)
             throw new Error("The parameter 'id' cannot be null.");
         else if (id !== undefined)
-            url_ += "Id=" + encodeURIComponent("" + id) + "&";
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -16098,7 +16098,7 @@ export class CreateOrEditCustomerDto implements ICreateOrEditCustomerDto {
     phoneNo!: string | undefined;
     address!: string | undefined;
     registrationDate!: DateTime | undefined;
-    userId!: number | undefined;
+    userIds!: number[] | undefined;
     id!: number | undefined;
 
     constructor(data?: ICreateOrEditCustomerDto) {
@@ -16117,7 +16117,11 @@ export class CreateOrEditCustomerDto implements ICreateOrEditCustomerDto {
             this.phoneNo = _data["phoneNo"];
             this.address = _data["address"];
             this.registrationDate = _data["registrationDate"] ? DateTime.fromISO(_data["registrationDate"].toString()) : <any>undefined;
-            this.userId = _data["userId"];
+            if (Array.isArray(_data["userIds"])) {
+                this.userIds = [] as any;
+                for (let item of _data["userIds"])
+                    this.userIds!.push(item);
+            }
             this.id = _data["id"];
         }
     }
@@ -16136,7 +16140,11 @@ export class CreateOrEditCustomerDto implements ICreateOrEditCustomerDto {
         data["phoneNo"] = this.phoneNo;
         data["address"] = this.address;
         data["registrationDate"] = this.registrationDate ? this.registrationDate.toString() : <any>undefined;
-        data["userId"] = this.userId;
+        if (Array.isArray(this.userIds)) {
+            data["userIds"] = [];
+            for (let item of this.userIds)
+                data["userIds"].push(item);
+        }
         data["id"] = this.id;
         return data;
     }
@@ -16148,7 +16156,7 @@ export interface ICreateOrEditCustomerDto {
     phoneNo: string | undefined;
     address: string | undefined;
     registrationDate: DateTime | undefined;
-    userId: number | undefined;
+    userIds: number[] | undefined;
     id: number | undefined;
 }
 
@@ -16609,8 +16617,7 @@ export class CustomerDto implements ICustomerDto {
     phoneNo!: string | undefined;
     address!: string | undefined;
     registrationDate!: DateTime | undefined;
-    userId!: number | undefined;
-    userName!: string | undefined;
+    userNames!: string | undefined;
     id!: number;
 
     constructor(data?: ICustomerDto) {
@@ -16629,8 +16636,7 @@ export class CustomerDto implements ICustomerDto {
             this.phoneNo = _data["phoneNo"];
             this.address = _data["address"];
             this.registrationDate = _data["registrationDate"] ? DateTime.fromISO(_data["registrationDate"].toString()) : <any>undefined;
-            this.userId = _data["userId"];
-            this.userName = _data["userName"];
+            this.userNames = _data["userNames"];
             this.id = _data["id"];
         }
     }
@@ -16649,8 +16655,7 @@ export class CustomerDto implements ICustomerDto {
         data["phoneNo"] = this.phoneNo;
         data["address"] = this.address;
         data["registrationDate"] = this.registrationDate ? this.registrationDate.toString() : <any>undefined;
-        data["userId"] = this.userId;
-        data["userName"] = this.userName;
+        data["userNames"] = this.userNames;
         data["id"] = this.id;
         return data;
     }
@@ -16662,8 +16667,7 @@ export interface ICustomerDto {
     phoneNo: string | undefined;
     address: string | undefined;
     registrationDate: DateTime | undefined;
-    userId: number | undefined;
-    userName: string | undefined;
+    userNames: string | undefined;
     id: number;
 }
 
@@ -19223,6 +19227,7 @@ export interface IGetCurrentLoginInformationsOutput {
 
 export class GetCustomerForEditOutput implements IGetCustomerForEditOutput {
     customer!: CreateOrEditCustomerDto;
+    assignedUserIds!: number[] | undefined;
 
     constructor(data?: IGetCustomerForEditOutput) {
         if (data) {
@@ -19236,6 +19241,11 @@ export class GetCustomerForEditOutput implements IGetCustomerForEditOutput {
     init(_data?: any) {
         if (_data) {
             this.customer = _data["customer"] ? CreateOrEditCustomerDto.fromJS(_data["customer"]) : <any>undefined;
+            if (Array.isArray(_data["assignedUserIds"])) {
+                this.assignedUserIds = [] as any;
+                for (let item of _data["assignedUserIds"])
+                    this.assignedUserIds!.push(item);
+            }
         }
     }
 
@@ -19249,12 +19259,18 @@ export class GetCustomerForEditOutput implements IGetCustomerForEditOutput {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["customer"] = this.customer ? this.customer.toJSON() : <any>undefined;
+        if (Array.isArray(this.assignedUserIds)) {
+            data["assignedUserIds"] = [];
+            for (let item of this.assignedUserIds)
+                data["assignedUserIds"].push(item);
+        }
         return data;
     }
 }
 
 export interface IGetCustomerForEditOutput {
     customer: CreateOrEditCustomerDto;
+    assignedUserIds: number[] | undefined;
 }
 
 export class GetDailySalesOutput implements IGetDailySalesOutput {
@@ -28241,6 +28257,8 @@ export class UserLookupDto implements IUserLookupDto {
     id!: number;
     userName!: string | undefined;
     name!: string | undefined;
+    surname!: string | undefined;
+    emailAddress!: string | undefined;
 
     constructor(data?: IUserLookupDto) {
         if (data) {
@@ -28256,6 +28274,8 @@ export class UserLookupDto implements IUserLookupDto {
             this.id = _data["id"];
             this.userName = _data["userName"];
             this.name = _data["name"];
+            this.surname = _data["surname"];
+            this.emailAddress = _data["emailAddress"];
         }
     }
 
@@ -28271,6 +28291,8 @@ export class UserLookupDto implements IUserLookupDto {
         data["id"] = this.id;
         data["userName"] = this.userName;
         data["name"] = this.name;
+        data["surname"] = this.surname;
+        data["emailAddress"] = this.emailAddress;
         return data;
     }
 }
@@ -28279,6 +28301,8 @@ export interface IUserLookupDto {
     id: number;
     userName: string | undefined;
     name: string | undefined;
+    surname: string | undefined;
+    emailAddress: string | undefined;
 }
 
 export class UserNotification implements IUserNotification {

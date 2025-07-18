@@ -10,7 +10,7 @@ namespace MyTraining1101Demo.Customers
     {
         Task<PagedResultDto<CustomerDto>> GetAll(GetAllCustomersInput input);
 
-        Task<GetCustomerForEditOutput> GetCustomerForEdit(EntityDto input);
+        Task<GetCustomerForEditOutput> GetCustomerForEdit(int id);
 
         Task CreateOrEdit(CreateOrEditCustomerDto input);
 

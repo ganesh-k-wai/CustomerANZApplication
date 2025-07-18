@@ -2,7 +2,9 @@
 using Abp.Domain.Entities.Auditing;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using MyTraining1101Demo.Authorization.Users;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 
@@ -19,9 +21,23 @@ namespace MyTraining1101Demo.Customers
 
         public string Address { get; set; }
 
-        public long? UserId { get; set; }
+        public string UserIds { get; set; } // "[1,2,3]"
 
-        [ForeignKey("UserId")]
-        public virtual User User { get; set; }
+        // Helper property to work with List<int>
+        [NotMapped]
+        public List<long> UserIdsList
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(UserIds))
+                    return new List<long>();
+
+                return JsonConvert.DeserializeObject<List<long>>(UserIds);
+            }
+            set
+            {
+                UserIds = JsonConvert.SerializeObject(value);
+            }
+        }
     }
 }

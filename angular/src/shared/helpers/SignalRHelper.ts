@@ -17,6 +17,7 @@ export class SignalRHelper {
                 remoteServiceBaseUrl: AppConsts.remoteServiceBaseUrl,
                 startConnection: undefined,
                 url: '/signalr',
+                withUrlOptions:undefined
             };
 
          
