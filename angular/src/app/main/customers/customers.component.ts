@@ -40,12 +40,10 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
  selectedUserIds: number[] = [];
   allUsers: UserLookupDto[] = [];
 
-   // Date picker configuration
-  datePickerConfig: Partial<BsDatepickerConfig> = {
-    containerClass: 'theme-default',
-    showWeekNumbers: false,
-    dateInputFormat: 'YYYY-MM-DD'
-  };
+  userSearchText: string = '';   //user searching
+  filteredUsers: UserLookupDto[] = [];
+
+
   
   customerForm: FormGroup;
   isEditMode = false;
@@ -67,6 +65,12 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
     this.initializeForm();
     this.loadAllUsers();
   }
+
+    datePickerConfig: Partial<BsDatepickerConfig> = {
+    containerClass: 'theme-default',
+    showWeekNumbers: false,
+    dateInputFormat: 'YYYY-MM-DD'
+  };
 
   initializeForm(): void {
     this.customerForm = this._formBuilder.group({
@@ -260,9 +264,6 @@ loadAllUsers(): void {
     this.skipCount = 0;
     this.getCustomers();
   }
-
-  // ----------------
-  // Add these properties
 get currentPage(): number {
   return Math.floor(this.skipCount / this.maxResultCount) + 1;
 }
@@ -270,18 +271,14 @@ get currentPage(): number {
 get totalPages(): number {
   return Math.ceil(this.totalCount / this.maxResultCount);
 }
-
-// Add these methods
 getVisiblePages(): number[] {
   const pages: number[] = [];
   const totalPages = this.totalPages;
   const currentPage = this.currentPage;
 
-  // Show 5 pages around current page
   let startPage = Math.max(1, currentPage - 2);
   let endPage = Math.min(totalPages, currentPage + 2);
 
-  // Adjust if we're near the beginning or end
   if (endPage - startPage < 4) {
     if (startPage === 1) {
       endPage = Math.min(totalPages, startPage + 4);
@@ -305,11 +302,10 @@ goToPage(page: number): void {
 }
 
 onPageSizeChange(): void {
-  this.skipCount = 0; // Reset to first page
+  this.skipCount = 0; 
   this.getCustomers();
 }
 
-// Update existing methods
 previousPage(): void {
   if (this.currentPage > 1) {
     this.goToPage(this.currentPage - 1);
@@ -321,10 +317,8 @@ nextPage(): void {
     this.goToPage(this.currentPage + 1);
   }
 }
-// ----------------
 
-
-  deleteCustomer(id: number): void {
+deleteCustomer(id: number): void {
     this.message.confirm('Are you sure you want to delete?', 'Confirm', result => {
       if (result) {
         this._customerService.delete(id).subscribe(() => {
@@ -336,9 +330,7 @@ nextPage(): void {
     });
   }
 
-  
-
-  getSelectedUserNames(): string {
+getSelectedUserNames(): string {
      if (this.selectedUserIds.length === 0) {
       return '';
     }
@@ -347,17 +339,25 @@ nextPage(): void {
     );
     
     return selectedUsers.map(user => user.userName).join(', ');
+ }
+
+filterUsers(): void {
+  if (!this.userSearchText || this.userSearchText.trim() === '') {
+    this.filteredUsers = [...this.assignedUsers];
+    return;
   }
-  // --------------------
+  
+  const searchText = this.userSearchText.toLowerCase().trim();
+  this.filteredUsers = this.assignedUsers.filter(user => 
+    (user.userName && user.userName.toLowerCase().includes(searchText)) ||
+    ((user.name || '') + ' ' + (user.surname || '')).toLowerCase().trim().includes(searchText) ||
+    (user.emailAddress && user.emailAddress.toLowerCase().includes(searchText))
+  );
+}
 
-
-  //   viewUsers(id: number): void {
-  //   this.message.info('This will show the associated users for customer ID: ' + id);
-  // }
    viewCustomer: any = null;
   assignedUsers: UserLookupDto[] = [];
   viewUsers(id: number): void {
-    // Get customer data from the list
     const customer = this.customers.find(c => c.id === id);
     if (!customer) {
       this.notify.error('Customer not found');
@@ -366,7 +366,7 @@ nextPage(): void {
 
     // Set the customer data for viewing
     this.viewCustomer = customer;
-
+    this.userSearchText = '';
     // Get assigned users for this customer
     if (customer.userNames && customer.userNames.trim() !== '') {
       // Parse the userNames string and match with allUsers
@@ -375,38 +375,34 @@ nextPage(): void {
       this.assignedUsers = this.allUsers.filter(user => 
         userNameArray.includes(user.userName)
       );
+      this.filteredUsers = [...this.assignedUsers];
     } else {
       this.assignedUsers = [];
+      this.filteredUsers = [];
     }
 
     // Show the view modal
     this.showViewModal();
   }
-
-    private showViewModal(): void {
+  private showViewModal(): void {
     setTimeout(() => {
       if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
         $('#viewCustomerModal').modal('show');
       }
     }, 100);
   }
-
   closeViewModal(): void {
     if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
       $('#viewCustomerModal').modal('hide');
     }
     this.viewCustomer = null;
     this.assignedUsers = [];
+      this.filteredUsers = [];
+  this.userSearchText = '';
   }
-
   editFromView(): void {
     this.closeViewModal();
     this.show(this.viewCustomer.id);
   }
-
-
-// --------------------
-
-
 
 }
