@@ -5,18 +5,21 @@ import {
   ViewChild
 } from '@angular/core';
 
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { AppComponentBase } from '@shared/common/app-component-base';
 import { appModuleAnimation } from '@shared/animations/routerTransition';
 import {
   CreateOrEditCustomerDto,
   CustomerDto,
   CustomerServiceProxy,
-  UserLookupDto
+  UserLookupDto,
+  UserServiceProxy,
+  GetUsersInput
 } from '@shared/service-proxies/service-proxies';
 import { finalize } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
+import { AppConsts } from '@shared/AppConsts';
 declare var $: any;
 
 @Component({
@@ -33,7 +36,8 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   totalCount = 0;
   Math = Math;
   availableUsers: UserLookupDto[] = [];
-
+ selectedUserIds: number[] = [];
+  allUsers: UserLookupDto[] = [];
 
    // Date picker configuration
   datePickerConfig: Partial<BsDatepickerConfig> = {
@@ -46,11 +50,14 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   isEditMode = false;
   saving = false;
   currentCustomerId: number | null = null;
+  http: any;
 
   constructor(
     injector: Injector,
     private _customerService: CustomerServiceProxy,
-    private _formBuilder: FormBuilder
+    private _formBuilder: FormBuilder,
+     private _userService: UserServiceProxy,
+ 
   ) {
     super(injector);
   }
@@ -58,6 +65,7 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   ngOnInit(): void {
     this.getCustomers();
     this.initializeForm();
+    this.loadAllUsers();
   }
 
   initializeForm(): void {
@@ -66,8 +74,79 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       registrationDate:[''],
       phoneNo: ['', [Validators.required]],
-      address: ['']
+      address: [''],
+      userIds: this._formBuilder.array([])
     });
+  }
+
+   get userIdsFormArray(): FormArray {
+    return this.customerForm.get('userIds') as FormArray;
+  }
+
+loadAllUsers(): void {
+  const url = AppConsts.remoteServiceBaseUrl + '/api/services/app/User/GetUsers';
+  
+  const userInput = new GetUsersInput();
+  userInput.filter = '';
+  userInput.onlyLockedUsers = false;
+  userInput.skipCount = 0;
+  userInput.maxResultCount = 1000;
+  
+  this.http.post(url, userInput)
+    .subscribe(result => {
+      // Make sure you're accessing the correct property path
+      this.allUsers = result.result?.items || [];
+      this.updateAvailableUsers();
+    }, error => {
+      this.notify.error('Failed to load users');
+      console.error('Error loading users:', error);
+    });
+}
+
+  updateAvailableUsers(): void {
+    this._customerService.getUnassignedUsers()
+      .subscribe(result => {
+        this.availableUsers = result;
+        
+        // If in edit mode, add currently assigned users to available list
+        if (this.isEditMode && this.selectedUserIds.length > 0) {
+          const currentlyAssignedUsers = this.allUsers.filter(user => 
+            this.selectedUserIds.includes(user.id)
+          );
+          
+          // Merge available users with currently assigned users (avoid duplicates)
+          currentlyAssignedUsers.forEach(assignedUser => {
+            if (!this.availableUsers.find(u => u.id === assignedUser.id)) {
+              this.availableUsers.push(assignedUser);
+            }
+          });
+        }
+        
+        this.updateUserCheckboxes();
+      });
+  }
+
+   updateUserCheckboxes(): void {
+    const userIdsArray = this.userIdsFormArray;
+    userIdsArray.clear();
+    
+    this.availableUsers.forEach(user => {
+      const isSelected = this.selectedUserIds.includes(user.id);
+      userIdsArray.push(new FormControl(isSelected));
+    });
+  }
+
+  onUserCheckboxChange(userId: number, isChecked: boolean): void {
+    if (isChecked) {
+      if (!this.selectedUserIds.includes(userId)) {
+        this.selectedUserIds.push(userId);
+      }
+    } else {
+      const index = this.selectedUserIds.indexOf(userId);
+      if (index > -1) {
+        this.selectedUserIds.splice(index, 1);
+      }
+    }
   }
 
   show(id: number | null): void {
@@ -104,10 +183,11 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
         });
     } else {
       this.customerForm.reset();
+      this.selectedUserIds = [];
+      this.updateAvailableUsers();
       this.showModal();
     }
   }
-
 
   private showModal(): void {
   if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
@@ -137,8 +217,7 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   }
   }
   
-  
-save(): void {
+  save(): void {
     if (this.customerForm.invalid) {
       return;
     }
@@ -155,6 +234,8 @@ save(): void {
     customerDto.registrationDate = registrationDate;
       
     customerDto.address = this.customerForm.get('address').value;
+    customerDto.userId = this.selectedUserIds.length > 0 ? this.selectedUserIds[0] : undefined;
+
     this._customerService.createOrEdit(customerDto)
       .pipe(finalize(() => this.saving = false))
       .subscribe(() => {
@@ -165,6 +246,7 @@ save(): void {
         }
         this.hideModal();
         this.getCustomers();
+          this.loadAllUsers(); 
       });
   }
 
@@ -198,6 +280,7 @@ save(): void {
         this._customerService.delete(id).subscribe(() => {
           this.notify.success('Customer deleted successfully.');
           this.getCustomers();
+           this.loadAllUsers();
         });
       }
     });
@@ -206,4 +289,15 @@ save(): void {
   viewUsers(id: number): void {
     this.message.info('This will show the associated users for customer ID: ' + id);
   }
+
+  getSelectedUserNames(): string {
+    if (this.selectedUserIds.length === 0) return 'None selected';
+    
+    const selectedUsers = this.availableUsers.filter(user => 
+      this.selectedUserIds.includes(user.id)
+    );
+    
+    return selectedUsers.map(user => user.userName).join(', ');
+  }
+
 }

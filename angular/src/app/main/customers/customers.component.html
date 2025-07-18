@@ -145,6 +145,43 @@
             </div>
           </div>
 
+             <!-- User Selection -->
+          <div class="form-group">
+            <label>Assign Users</label>
+            <div class="card">
+              <div class="card-header">
+                <small class="text-muted">
+                  Selected: {{ selectedUserIds.length }} users
+                  <span *ngIf="selectedUserIds.length > 0">
+                    ({{ getSelectedUserNames() }})
+                  </span>
+                </small>
+              </div>
+              <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                <div *ngIf="availableUsers.length === 0" class="text-muted text-center py-3">
+                  <i class="fa fa-info-circle"></i> No users available
+                </div>
+                <div *ngFor="let user of availableUsers; let i = index" class="form-check mb-2">
+                  <input 
+                    type="checkbox" 
+                    class="form-check-input" 
+                    [id]="'user_' + user.id"
+                    [checked]="selectedUserIds.includes(user.id)"
+                    (change)="onUserCheckboxChange(user.id, $event.target.checked)">
+                  <label class="form-check-label d-flex align-items-center" [for]="'user_' + user.id">
+                    <div class="ml-2">
+                      <div class="font-weight-bold">{{ user.userName }}</div>
+                      <small class="text-muted">
+                        {{ user.name }} {{ user.surname }}
+                        <span *ngIf="user.emailAddress"> - {{ user.emailAddress }}</span>
+                      </small>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Address -->
           <div class="form-group">
             <label for="address">Address</label>
