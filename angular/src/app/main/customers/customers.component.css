@@ -1,0 +1,79 @@
+.textColor{
+    color: rgba(41, 170, 209, 0.8) !important;
+}
+.createBtn{
+    background-color: orangered !important;
+    color: white !important;
+}
+.table-custom th,
+.table-custom td {
+  padding-left: 19px !important;
+}
+
+.linearGrad{
+    background-image:linear-gradient(to right , rgb(252, 166, 134), white) !important;
+}
+
+
+.btn-shine {
+  transform: translate(-50%, -50%);
+  color: #ffffff;
+  background: linear-gradient(to right, #070707 0, white 100%, #6e6e6e 20%);
+  background-position: 0;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 7s infinite linear;
+  animation-fill-mode: forwards;
+  -webkit-text-size-adjust: none;
+  /* font-weight: 600; */
+  /* font-size: 16px; */
+  text-decoration: none;
+  white-space: nowrap;
+}
+@keyframes shine {
+  0% {
+    background-position: 0px;
+  }
+
+  100% {
+    background-position: 300px;
+  }
+}
+
+
+/* ---- */
+/* Add to customers.component.css */
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.border-left-primary {
+  border-left: 4px solid #007bff !important;
+}
+
+.card {
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border: 1px solid #e3e6f0;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.text-primary {
+  color: #007bff !important;
+}
+
+.fw-bold {
+  font-weight: bold !important;
+}
+
+.bg-info {
+  background-color: #17a2b8 !important;
+}

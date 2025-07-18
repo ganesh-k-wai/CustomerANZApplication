@@ -103,6 +103,8 @@ loadAllUsers(): void {
 }
 
   updateAvailableUsers(): void {
+
+    
     this._customerService.getUnassignedUsers()
       .subscribe(result => {
         this.availableUsers = result;
@@ -230,6 +232,11 @@ loadAllUsers(): void {
       });
   }
 
+ getUserNameById(userId: number): string {
+  const user = this.availableUsers.find(u => u.id === userId);
+  return user ? user.userName : '';
+}
+
   cancel(): void {
     this.customerForm.reset();
     this.currentCustomerId = null;
@@ -244,6 +251,7 @@ loadAllUsers(): void {
       .getAll(this.keyword, undefined, this.skipCount, this.maxResultCount)
       .subscribe(result => {
         this.customers = result.items;
+        this.customers.sort((a, b) => b.id - a.id);
         this.totalCount = result.totalCount;
       });
   }
@@ -253,14 +261,67 @@ loadAllUsers(): void {
     this.getCustomers();
   }
 
-  nextPage(): void {
-    this.skipCount += this.maxResultCount;
+  // ----------------
+  // Add these properties
+get currentPage(): number {
+  return Math.floor(this.skipCount / this.maxResultCount) + 1;
+}
+
+get totalPages(): number {
+  return Math.ceil(this.totalCount / this.maxResultCount);
+}
+
+// Add these methods
+getVisiblePages(): number[] {
+  const pages: number[] = [];
+  const totalPages = this.totalPages;
+  const currentPage = this.currentPage;
+
+  // Show 5 pages around current page
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, currentPage + 2);
+
+  // Adjust if we're near the beginning or end
+  if (endPage - startPage < 4) {
+    if (startPage === 1) {
+      endPage = Math.min(totalPages, startPage + 4);
+    } else if (endPage === totalPages) {
+      startPage = Math.max(1, endPage - 4);
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+
+  return pages;
+}
+
+goToPage(page: number): void {
+  if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+    this.skipCount = (page - 1) * this.maxResultCount;
     this.getCustomers();
   }
-   previousPage(): void {
-    this.skipCount = Math.max(0, this.skipCount - this.maxResultCount);
-    this.getCustomers();
+}
+
+onPageSizeChange(): void {
+  this.skipCount = 0; // Reset to first page
+  this.getCustomers();
+}
+
+// Update existing methods
+previousPage(): void {
+  if (this.currentPage > 1) {
+    this.goToPage(this.currentPage - 1);
   }
+}
+
+nextPage(): void {
+  if (this.currentPage < this.totalPages) {
+    this.goToPage(this.currentPage + 1);
+  }
+}
+// ----------------
 
 
   deleteCustomer(id: number): void {
@@ -275,9 +336,7 @@ loadAllUsers(): void {
     });
   }
 
-  viewUsers(id: number): void {
-    this.message.info('This will show the associated users for customer ID: ' + id);
-  }
+  
 
   getSelectedUserNames(): string {
      if (this.selectedUserIds.length === 0) {
@@ -289,5 +348,65 @@ loadAllUsers(): void {
     
     return selectedUsers.map(user => user.userName).join(', ');
   }
+  // --------------------
+
+
+  //   viewUsers(id: number): void {
+  //   this.message.info('This will show the associated users for customer ID: ' + id);
+  // }
+   viewCustomer: any = null;
+  assignedUsers: UserLookupDto[] = [];
+  viewUsers(id: number): void {
+    // Get customer data from the list
+    const customer = this.customers.find(c => c.id === id);
+    if (!customer) {
+      this.notify.error('Customer not found');
+      return;
+    }
+
+    // Set the customer data for viewing
+    this.viewCustomer = customer;
+
+    // Get assigned users for this customer
+    if (customer.userNames && customer.userNames.trim() !== '') {
+      // Parse the userNames string and match with allUsers
+      const userNameArray = customer.userNames.split(',').map(name => name.trim());
+      
+      this.assignedUsers = this.allUsers.filter(user => 
+        userNameArray.includes(user.userName)
+      );
+    } else {
+      this.assignedUsers = [];
+    }
+
+    // Show the view modal
+    this.showViewModal();
+  }
+
+    private showViewModal(): void {
+    setTimeout(() => {
+      if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+        $('#viewCustomerModal').modal('show');
+      }
+    }, 100);
+  }
+
+  closeViewModal(): void {
+    if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+      $('#viewCustomerModal').modal('hide');
+    }
+    this.viewCustomer = null;
+    this.assignedUsers = [];
+  }
+
+  editFromView(): void {
+    this.closeViewModal();
+    this.show(this.viewCustomer.id);
+  }
+
+
+// --------------------
+
+
 
 }

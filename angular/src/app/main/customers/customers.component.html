@@ -1,33 +1,37 @@
 <div [@routerTransition]>
-  <div class="content d-flex flex-column flex-column-fluid">
+  <div class="content d-flex flex-column  border border-danger p-0  m-5">
 
-    <div class="d-flex align-items-center justify-content-between mb-4">
-      <h1 class="kt-subheader__title">{{ 'Customers' | localize }}</h1>
+    <div class="d-flex align-items-center justify-content-between pt-0 mb-4 shadow-sm p-0">
+      <h4 class="p-2 mt-3 fw-bolder"><span class="textColor">Customers</span> &ensp; | Manage Customer and Customer
+        user</h4>
       <div>
-        <button class="btn btn-primary" (click)="show(null)">
-          <i class="fa fa-plus"></i> {{ 'Create' | localize }}
+        <button class="btn createBtn px-2 me-2 p-2 rounded-1   " (click)="show(null)">
+          <i class="fa fa-plus text-white"></i>
+          <span class="btn-shine">
+            Create New Customer
+          </span>
         </button>
       </div>
     </div>
 
     <div class="container-fluid">
-      <div class="card card-custom">
-        <div class="card-body">
-          <div class="form-group mb-4">
-            <div class="input-group">
-              <input type="text" class="form-control" [(ngModel)]="keyword" placeholder="Search by name or email..."
-                (keyup.enter)="onSearch()">
-              <div class="input-group-append">
-                <button class="btn btn-primary" type="button" (click)="onSearch()">
-                  <i class="fa fa-search"></i> Search
+      <div class="card card-custom bg-transparent">
+        <div class="card-body ">
+          <div class="d-flex justify-content-between">
+            <h3 class="kt-subheader__title">{{ 'Customers' | localize }}</h3>
+            <div class="form-group mb-4 w-50 border border-secondary  rounded-1">
+              <div class="input-group " style="height: 100%;">
+                <input type="text" class="form-control border border-transparent" style="height: 100%;"
+                  [(ngModel)]="keyword" placeholder="Search..." (keyup.enter)="onSearch()">
+                <button class="btn " type="button" (click)="onSearch()">
+                  <i class="fa fa-search textColor fs-3 fw-bolder"></i>
                 </button>
               </div>
             </div>
           </div>
-
-          <div class="table-responsive">
-            <table class="table table-hover table-striped">
-              <thead class="thead-light">
+          <div class="table-responsive" style="min-height: 350px;width: 100%;">
+            <table class="table table-hover table-striped table-fixed table-custom">
+              <thead class="thead-dark " style="padding-left: 19px !important;">
                 <tr>
                   <th>Sr No</th>
                   <th>Name</th>
@@ -40,22 +44,37 @@
               </thead>
               <tbody>
                 <tr *ngFor="let customer of customers; let i=index">
-                  <td>{{ skipCount +i + 1 }}</td>
-                  <td>{{ customer.name }}</td>
-                  <td>{{ customer.email }}</td>
-                  <td>{{ customer.address }}</td>
-                  <td>{{ customer.registrationDate | date:'medium' }}</td>
-                  <td>{{ customer.userNames || 'No users assigned' }}</td>
-                  <td>
-                    <button class="btn btn-sm btn-primary mr-1" (click)="show(customer.id)">
-                      <i class="fa fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-info mr-1" (click)="viewUsers(customer.id)">
-                      <i class="fa fa-users"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" (click)="deleteCustomer(customer.id)">
-                      <i class="fa fa-trash"></i>
-                    </button>
+                  <td class="text-truncate" style="max-width: 60px;">{{ skipCount + i + 1 }}</td>
+                  <td class="text-truncate" style="max-width: 120px;">{{ customer.name }}</td>
+                  <td class="text-truncate" style="max-width: 150px;">{{ customer.email }}</td>
+                  <td class="text-truncate" style="max-width: 200px;">{{ customer.address }}</td>
+                  <td class="text-truncate" style="max-width: 140px;">{{ customer.registrationDate | date:'dd-MM-yyyy'
+                    }}
+                  </td>
+                  <td class="text-truncate" title="{{ customer.userNames}}" style="max-width: 150px;"><i
+                      class="bi bi-person text-dark">{{
+                      customer.userNames ? customer.userNames.split(',').length : 0 }}
+                    </i>
+                  </td>
+                  <td style="max-width: 80px;">
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary " type="button" [id]="'dropdown_' + customer.id"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="bi bi-three-dots textColor"></i>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-right "
+                        [attr.aria-labelledby]="'dropdown_' + customer.id">
+                        <a class="dropdown-item" href="javascript:void(0)" (click)="show(customer.id)">
+                          Edit
+                        </a>
+                        <a class="dropdown-item" href="javascript:void(0)" (click)="viewUsers(customer.id)">
+                          View
+                        </a>
+                        <a class="dropdown-item " href="javascript:void(0)" (click)="deleteCustomer(customer.id)">
+                          Delete
+                        </a>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -66,25 +85,70 @@
             <p>No customer records found</p>
           </div>
 
+          <!-- New numbered pagination -->
           <nav aria-label="Customer pagination" *ngIf="totalCount > 0">
             <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span>Showing {{ skipCount + 1 }} to {{ Math.min(skipCount + maxResultCount, totalCount) }} of {{
-                  totalCount }} entries</span>
+
+              <div class="d-flex align-items-center">
+                <!-- Numbered pagination -->
+                <nav>
+                  <ul class="pagination pagination-sm mb-0">
+                    <!-- Previous button -->
+                    <li class="page-item" [class.disabled]="currentPage === 1">
+                      <button class="page-link" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+                        <i class="fa fa-chevron-left"></i>
+                      </button>
+                    </li>
+
+                    <!-- First page -->
+                    <li class="page-item" *ngIf="currentPage > 3">
+                      <button class="page-link" (click)="goToPage(1)">1</button>
+                    </li>
+
+                    <!-- Dots if needed -->
+                    <li class="page-item disabled" *ngIf="currentPage > 4">
+                      <span class="page-link">...</span>
+                    </li>
+
+                    <!-- Page numbers around current page -->
+                    <li class="page-item" *ngFor="let page of getVisiblePages()" [class.active]="page === currentPage">
+                      <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
+                    </li>
+
+                    <!-- Dots if needed -->
+                    <li class="page-item disabled" *ngIf="currentPage < totalPages - 3">
+                      <span class="page-link">...</span>
+                    </li>
+
+                    <!-- Last page -->
+                    <li class="page-item" *ngIf="currentPage < totalPages - 2">
+                      <button class="page-link" (click)="goToPage(totalPages)">{{ totalPages }}</button>
+                    </li>
+
+                    <!-- Next button -->
+                    <li class="page-item" [class.disabled]="currentPage === totalPages">
+                      <button class="page-link" (click)="goToPage(currentPage + 1)"
+                        [disabled]="currentPage === totalPages">
+                        <i class="fa fa-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
               </div>
-              <div>
-                <div class="btn-group" role="group">
-                  <button class="btn btn-outline-primary" [disabled]="skipCount === 0" (click)="previousPage()">
-                    <i class="fa fa-chevron-left"></i> Previous
-                  </button>
-                  <button class="btn btn-outline-primary" [disabled]="skipCount + maxResultCount >= totalCount"
-                    (click)="nextPage()">
-                    Next <i class="fa fa-chevron-right"></i>
-                  </button>
+              <div class="d-flex align-items-center">
+                <div class="mr-3">
+                  <select class="form-control form-control-sm" [(ngModel)]="maxResultCount"
+                    (change)="onPageSizeChange()">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                  </select>
                 </div>
               </div>
             </div>
           </nav>
+
         </div>
       </div>
     </div>
@@ -93,88 +157,91 @@
 
 <div class="modal fade" id="customerModal" tabindex="-1" role="dialog" aria-labelledby="customerModalLabel"
   aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div class="modal-dialog" role="document" style="max-width: 800px;height: 80vh; ">
+    <div class="modal-content" style="border: 1px solid orangered;">
+      <div class="modal-header linearGrad">
         <h5 class="modal-title" id="customerModalLabel">{{ isEditMode ? 'Edit Customer' : 'Create Customer' }}</h5>
-        <button type="button" class="close" (click)="cancel()" aria-label="Close">
+        <button type="button" class="close fs-1" (click)="cancel()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <form *ngIf="customerForm" [formGroup]="customerForm" (ngSubmit)="save()">
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" id="name" formControlName="name">
-            <div
-              *ngIf="customerForm.controls['name'].invalid && (customerForm.controls['name'].dirty || customerForm.controls['name'].touched)"
-              class="text-danger">
-              <small *ngIf="customerForm.controls['name'].errors?.['required']">Name is required</small>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" class="form-control" id="email" formControlName="email">
-            <div
-              *ngIf="customerForm.controls['email'].invalid && (customerForm.controls['email'].dirty || customerForm.controls['email'].touched)"
-              class="text-danger">
-              <small *ngIf="customerForm.controls['email'].errors?.['required']">Email is required</small>
-              <small *ngIf="customerForm.controls['email'].errors?.['email']">Please enter a valid email</small>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="registrationDate">Registration Date</label>
-            <input type="text" class="form-control" id="registrationDate" formControlName="registrationDate"
-              bsDatepicker [bsConfig]="datePickerConfig" placeholder="Select date" readonly>
-          </div>
-          <div class="form-group">
-            <label for="phoneNo">Phone No</label>
-            <input type="tel" class="form-control" id="phoneNo" formControlName="phoneNo">
-            <div
-              *ngIf="customerForm.controls['phoneNo'].invalid && (customerForm.controls['phoneNo'].dirty || customerForm.controls['phoneNo'].touched)"
-              class="text-danger">
-              <small *ngIf="customerForm.controls['phoneNo'].errors?.['required']">Phone number is required</small>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Assign Users</label>
-            <div class="card">
-              <div class="card-header">
-                <small class="text-muted">
-                  Selected: {{ selectedUserIds.length }} users
-                  <span *ngIf="selectedUserIds.length > 0">
-                    ({{ getSelectedUserNames() }})
-                  </span>
-                </small>
-              </div>
-              <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                <div *ngIf="availableUsers.length === 0" class="text-muted text-center py-3">
-                  <i class="fa fa-info-circle"></i> No users available
+        <div class="modal-body p-0">
+          <div class="container mt-1">
+            <div class="row ">
+              <div class="col-md-4  ">
+                <div class="form-group">
+                  <label for="name">Name</label>
+                  <input type="text" class="form-control" id="name" formControlName="name">
+                  <div
+                    *ngIf="customerForm.controls['name'].invalid && (customerForm.controls['name'].dirty || customerForm.controls['name'].touched)"
+                    class="text-danger">
+                    <small *ngIf="customerForm.controls['name'].errors?.['required']">Name is required</small>
+                  </div>
                 </div>
-                <div *ngFor="let user of availableUsers; let i = index" class="form-check mb-2">
-                  <input type="checkbox" class="form-check-input" [id]="'user_' + user.id"
-                    [checked]="selectedUserIds.includes(user.id)"
-                    (change)="onUserCheckboxChange(user.id, $event.target.checked)">
-                  <label class="form-check-label d-flex align-items-center" [for]="'user_' + user.id">
-                    <div class="ml-2">
-                      <div class="font-weight-bold">{{ user.userName }}</div>
-                      <small class="text-muted">
-                        {{ user.name }} {{ user.surname }}
-                        <span *ngIf="user.emailAddress"> - {{ user.emailAddress }}</span>
-                      </small>
+              </div>
+              <div class="col-md-4 ">
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input type="email" class="form-control" id="email" formControlName="email">
+                  <div
+                    *ngIf="customerForm.controls['email'].invalid && (customerForm.controls['email'].dirty || customerForm.controls['email'].touched)"
+                    class="text-danger">
+                    <small *ngIf="customerForm.controls['email'].errors?.['required']">Email is required</small>
+                    <small *ngIf="customerForm.controls['email'].errors?.['email']">Please enter a valid email</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 ">
+                <div class="form-group">
+                  <label for="registrationDate">Registration Date</label>
+                  <input type="text" class="form-control" id="registrationDate" formControlName="registrationDate"
+                    bsDatepicker [bsConfig]="datePickerConfig" placeholder="Select date" readonly>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="phoneNo">Phone No</label>
+                  <input type="tel" class="form-control" id="phoneNo" formControlName="phoneNo">
+                  <div
+                    *ngIf="customerForm.controls['phoneNo'].invalid && (customerForm.controls['phoneNo'].dirty || customerForm.controls['phoneNo'].touched)"
+                    class="text-danger">
+                    <small *ngIf="customerForm.controls['phoneNo'].errors?.['required']">Phone number is
+                      required</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Assign Users</label>
+                  <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                    <div *ngIf="availableUsers.length === 0" class="text-muted text-center py-3">
+                      No users available
                     </div>
-                  </label>
+                    <div *ngFor="let user of availableUsers" class="form-check mb-2">
+                      <input type="checkbox" class="form-check-input" [id]="'user_' + user.id"
+                        [checked]="selectedUserIds.includes(user.id)"
+                        (change)="onUserCheckboxChange(user.id, $event.target.checked)">
+                      <label class="form-check-label" [for]="'user_' + user.id">
+                        {{ user.name }} {{ user.surname }}
+                      </label>
+                    </div>
+                  </div>
+                  <small class="text-muted mt-1">
+                    Selected: {{ selectedUserIds.length }} user(s)
+                  </small>
                 </div>
               </div>
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="address">Address</label>
+                  <textarea class="form-control" id="address" formControlName="address" rows="3"></textarea>
+                </div>
+              </div>
+
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="address">Address</label>
-            <textarea class="form-control" id="address" formControlName="address" rows="3"></textarea>
-          </div>
 
         </div>
         <div class="modal-footer">
@@ -184,6 +251,96 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="viewCustomerModal" tabindex="-1" role="dialog" aria-labelledby="viewCustomerModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white p-2">
+        <h5 class="modal-title" id="viewCustomerModalLabel">
+          <i class="fa fa-eye me-2"></i>Customer Details
+        </h5>
+        <button type="button" class="close text-white" (click)="closeViewModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0" *ngIf="viewCustomer">
+        <div class="container-fluid py-3">
+          <!-- Customer Information Section -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="fa fa-user me-2"></i>Customer Information
+              </h6>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="fw-bold text-muted">Name:</label>
+              <p class="mb-0">{{ viewCustomer.name || 'Not provided' }}</p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="fw-bold text-muted">Email:</label>
+              <p class="mb-0">{{ viewCustomer.email || 'Not provided' }}</p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="fw-bold text-muted">Phone Number:</label>
+              <p class="mb-0">{{ viewCustomer.phoneNo || 'Not provided' }}</p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="fw-bold text-muted">Registration Date:</label>
+              <p class="mb-0">{{ viewCustomer.registrationDate | date:'dd-MM-yyyy' || 'Not provided' }}</p>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="fw-bold text-muted">Address:</label>
+              <p class="mb-0">{{ viewCustomer.address || 'Not provided' }}</p>
+            </div>
+          </div>
+
+          <!-- Assigned Users Section -->
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="fa fa-users me-2"></i>Assigned Users
+                <span class="badge badge-primary ms-2">{{ assignedUsers.length }}</span>
+              </h6>
+            </div>
+            <div class="col-12">
+              <div *ngIf="assignedUsers && assignedUsers.length > 0; else noUsersAssigned">
+                <div class="row">
+                  <div class="col-md-6 mb-3" *ngFor="let user of assignedUsers">
+                    <div class="card border-left-primary h-100">
+                      <div class="card-body p-3">
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-primary text-white me-3">
+                            <i class="fa fa-user"></i>
+                          </div>
+                          <div class="flex-grow-1">
+                            <h6 class="mb-1 font-weight-bold">{{ user.userName }}</h6>
+                            <p class="mb-1 text-muted small">{{ user.name }} {{ user.surname }}</p>
+                            <p class="mb-0 text-muted small" *ngIf="user.emailAddress">
+                              <i class="fa fa-envelope me-1"></i>{{ user.emailAddress }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noUsersAssigned>
+                <div class="text-center py-4">
+                  <i class="fa fa-user-times fa-3x text-muted mb-3"></i>
+                  <p class="text-muted">No users assigned to this customer</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

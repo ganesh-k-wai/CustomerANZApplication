@@ -16,9 +16,10 @@ import { CustomerServiceProxy } from '@shared/service-proxies/service-proxies';
     CommonModule,
     CustomersRoutingModule,
     AppSharedModule
+    
   ],
   providers: [
-    CustomerServiceProxy // Add this line
+    CustomerServiceProxy 
   ]
 })
 export class CustomersModule { }

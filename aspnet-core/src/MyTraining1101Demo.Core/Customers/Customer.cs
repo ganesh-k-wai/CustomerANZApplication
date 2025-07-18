@@ -21,9 +21,8 @@ namespace MyTraining1101Demo.Customers
 
         public string Address { get; set; }
 
-        public string UserIds { get; set; } // "[1,2,3]"
+        public string UserIds { get; set; } 
 
-        // Helper property to work with List<int>
         [NotMapped]
         public List<long> UserIdsList
         {

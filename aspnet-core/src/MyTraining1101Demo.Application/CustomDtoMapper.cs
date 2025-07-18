@@ -171,7 +171,6 @@ namespace MyTraining1101Demo
 
             configuration.CreateMap<Customer, CustomerDto>();
 
-            // Existing mappings remain the same
             configuration.CreateMap<Customer, CreateOrEditCustomerDto>()
                 .ForMember(dest => dest.UserIds, opt => opt.MapFrom(src => src.UserIdsList));
 
