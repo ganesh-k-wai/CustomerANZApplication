@@ -299,15 +299,14 @@
           </div>
 
           <div class="row">
-  <div class="col-12">
-    <h6 class=" border-bottom pb-2 mb-3 textColor">
+       <div class="col-12">
+       <h6 class=" border-bottom pb-2 mb-3 textColor">
       <i class="fa fa-users me-2"></i>Assigned Users
       <span class="badge  ms-2">{{ assignedUsers.length }}</span>
     </h6>
   </div>
   <div class="col-12">
     <div *ngIf="assignedUsers && assignedUsers.length > 0; else noUsersAssigned">
-      <!-- Search bar for users -->
       <div class="d-flex justify-content-end mb-2">
         <div class="input-group" style="width: 250px;">
           <input 
@@ -383,7 +382,7 @@
       </div>
     </ng-template>
   </div>
-</div>
+          </div>
         </div>
       </div>
 
