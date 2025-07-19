@@ -40,7 +40,7 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
  selectedUserIds: number[] = [];
   allUsers: UserLookupDto[] = [];
 
-  userSearchText: string = '';   //user searching
+  userSearchText: string = ''; 
   filteredUsers: UserLookupDto[] = [];
 
 
