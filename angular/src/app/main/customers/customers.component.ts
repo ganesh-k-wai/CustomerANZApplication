@@ -5,7 +5,6 @@ import {
   ViewChild
 } from '@angular/core';
 
-import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { AppComponentBase } from '@shared/common/app-component-base';
 import { appModuleAnimation } from '@shared/animations/routerTransition';
 import {
@@ -25,7 +24,7 @@ declare var $: any;
 
 @Component({
   selector: 'app-customers',
-  templateUrl: './customers.component.html',
+  templateUrl: 'customers.component.html',
   styleUrls: ['./customers.component.css'],
   animations: [appModuleAnimation()]
 })
@@ -43,7 +42,15 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   userSearchText: string = ''; 
   filteredUsers: UserLookupDto[] = [];
 
-  customerForm: FormGroup;
+  // Template-driven form model
+  customer: any = {
+    name: '',
+    email: '',
+    registrationDate: null,
+    phoneNo: '',
+    address: ''
+  };
+
   isEditMode = false;
   saving = false;
   currentCustomerId: number | null = null;
@@ -51,7 +58,6 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   constructor(
     injector: Injector,
     private _customerService: CustomerServiceProxy,
-    private _formBuilder: FormBuilder,
     private _userService: UserServiceProxy,
     private http: HttpClient
   ) {
@@ -60,7 +66,6 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
 
   ngOnInit(): void {
     this.getCustomers();
-    this.initializeForm();
     this.loadAllUsers();
   }
 
@@ -70,38 +75,25 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
     dateInputFormat: 'DD-MM-YYYY'
   };
 
-  initializeForm(): void {
-    this.customerForm = this._formBuilder.group({
-      name: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
-      registrationDate:[''],
-      phoneNo: ['', [Validators.required]],
-      address: [''],
-      userIds: this._formBuilder.array([])
-    });
-  }
-
-   get userIdsFormArray(): FormArray {
-    return this.customerForm.get('userIds') as FormArray;
-  }
-
- save(): void {
-    if (this.customerForm.invalid) {
+ save(form: any): void {
+    if (form.invalid) {
+      // Mark all fields as touched to show validation errors
+      Object.keys(form.controls).forEach(key => {
+        form.controls[key].markAsTouched();
+      });
       return;
     }
 
     this.saving = true;
     const customerDto = new CreateOrEditCustomerDto();
     customerDto.id = this.currentCustomerId || undefined;
-    customerDto.name = this.customerForm.get('name').value;
-    customerDto.email = this.customerForm.get('email').value;
-  customerDto.phoneNo = this.customerForm.get('phoneNo').value;
-  
+    customerDto.name = this.customer.name;
+    customerDto.email = this.customer.email;
+    customerDto.phoneNo = this.customer.phoneNo;
 
-    const registrationDate = this.customerForm.get('registrationDate').value;
-    customerDto.registrationDate = registrationDate;
+    customerDto.registrationDate = this.customer.registrationDate;
       
-    customerDto.address = this.customerForm.get('address').value;
+    customerDto.address = this.customer.address;
     customerDto.userIds = this.selectedUserIds;
 
     this._customerService.createOrEdit(customerDto)
@@ -135,22 +127,11 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
             }
           });
         }
-        
-        this.updateUserCheckboxes();
       });
   }
 
-   updateUserCheckboxes(): void {
-    const userIdsArray = this.userIdsFormArray;
-    userIdsArray.clear();
-    
-    this.availableUsers.forEach(user => {
-      const isSelected = this.selectedUserIds.includes(user.id);
-      userIdsArray.push(new FormControl(isSelected));
-    });
-  }
-
-  onUserCheckboxChange(userId: number, isChecked: boolean): void {
+  onUserCheckboxChange(userId: number, event: any): void {
+    const isChecked = event.target.checked;
     if (isChecked) {
       if (!this.selectedUserIds.includes(userId)) {
         this.selectedUserIds.push(userId);
@@ -200,18 +181,27 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
             registrationDate = new Date(result.customer.registrationDate.toString());
           }
 
-          this.customerForm.patchValue({
+          // Update the customer model
+          this.customer = {
             name: result.customer.name,
             email: result.customer.email,
             registrationDate: registrationDate,
             phoneNo: result.customer.phoneNo,
             address: result.customer.address
-          });
+          };
+          
           this.updateAvailableUsers();
           this.showModal();
         });
     } else {
-      this.customerForm.reset();
+      // Reset customer model for new customer
+      this.customer = {
+        name: '',
+        email: '',
+        registrationDate: null,
+        phoneNo: '',
+        address: ''
+      };
       this.updateAvailableUsers();
       this.showModal();
     }
@@ -231,7 +221,15 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   }
   
   cancel(): void {
-    this.customerForm.reset();
+    // Reset customer model
+    this.customer = {
+      name: '',
+      email: '',
+      registrationDate: null,
+      phoneNo: '',
+      address: ''
+    };
+    
     this.currentCustomerId = null;
     this.isEditMode = false;
     this.saving = false;

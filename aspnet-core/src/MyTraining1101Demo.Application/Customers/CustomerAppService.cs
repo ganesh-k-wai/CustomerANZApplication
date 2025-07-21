@@ -26,7 +26,7 @@ namespace MyTraining1101Demo.Customers
         public CustomerAppService(
             IRepository<Customer> customerRepository,
     IRepository<User, long> userRepository,
-    IRepository<CustomerUser> customerUserRepository, // ADD THIS
+    IRepository<CustomerUser> customerUserRepository, 
     IObjectMapper objectMapper)
         {
             _customerRepository = customerRepository;
@@ -58,7 +58,6 @@ namespace MyTraining1101Demo.Customers
 
             var customerIds = customers.Select(c => c.Id).ToList();
 
-            // Fetch all mappings
             var mappings = await _customerUserRepository.GetAll()
                 .Where(cu => customerIds.Contains(cu.CustomerId))
                 .Include(cu => cu.User)
@@ -134,9 +133,8 @@ namespace MyTraining1101Demo.Customers
             };
 
             await _customerRepository.InsertAsync(customer);
-            await CurrentUnitOfWork.SaveChangesAsync(); // to get generated ID
+            await CurrentUnitOfWork.SaveChangesAsync(); 
 
-            // Insert mappings to CustomerUser table
             foreach (var userId in input.UserIds)
             {
                 await _customerUserRepository.InsertAsync(new CustomerUser
@@ -160,7 +158,6 @@ namespace MyTraining1101Demo.Customers
 
             await _customerRepository.UpdateAsync(customer);
 
-            // Delete existing user mappings
             var existingMappings = await _customerUserRepository
                 .GetAll()
                 .Where(cu => cu.CustomerId == customer.Id)
@@ -171,7 +168,6 @@ namespace MyTraining1101Demo.Customers
                 await _customerUserRepository.DeleteAsync(mapping);
             }
 
-            // Insert new user mappings
             foreach (var userId in input.UserIds)
             {
                 await _customerUserRepository.InsertAsync(new CustomerUser

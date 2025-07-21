@@ -1,181 +1,171 @@
-<!DOCTYPE html>
-<html lang="en">
+<div class="container shadow-lg">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-
-<body>
-
-  <div class="container shadow-lg">
-
-    <div class="row">
-      <div class="col-12 m-5">
-        <div class="d-flex align-items-center justify-content-between pt-0 mb-4 shadow-sm p-0">
-          <h4 class="p-2 mt-3 fw-bolder"><span class="textColor">Customers</span> &ensp; | Manage Customer and Customer
-            user</h4>
-          <div>
-            <button class="btn createBtn px-2 me-2 p-2 rounded-1" (click)="show(null)">
-              <i class="fa fa-plus text-white"></i>
-              <span class="btn-shine">
-                Create New Customer
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-12">
-        <div class="card card-custom bg-transparent mb-4">
-          <div class="card-body ">
-            <div class="d-flex justify-content-between">
-              <h3>Customers</h3>
-              <div class="form-group mb-4 w-50 border border-secondary  rounded-1">
-                <div class="input-group " style="height: 100%;">
-                  <input type="text" class="form-control border border-transparent" style="height: 100%;"
-                    [(ngModel)]="keyword" placeholder="Search..." (keyup.enter)="onSearch()">
-                  <button class="btn " type="button" (click)="onSearch()">
-                    <i class="fa fa-search textColor fs-3 fw-bolder"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <!-- customer table  -->
-            <div class="table-responsive " style="min-height: 350px;width: 100%; overflow-x: auto;">
-              <table class="table table-hover table-striped table-fixed table-custom">
-                <thead class="thead-dark ">
-                  <tr>
-                    <!-- <th>Sr No</th> -->
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Address</th>
-                    <th>Registration Date</th>
-                    <!-- <th>Assigned Users</th> -->
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let customer of customers; let i=index">
-                    <!-- <td class="text-truncate" style="max-width: 60px;">{{ skipCount + i + 1 }}</td> -->
-                    <td class="text-truncate" title="{{ customer.name}}" style="max-width: 120px;">{{ customer.name }}
-                    </td>
-                    <td class="text-truncate" title="{{ customer.email}}" style="max-width: 150px;">{{ customer.email }}
-                    </td>
-                    <td class="text-truncate" title="{{ customer.address}}" style="max-width: 200px;">{{
-                      customer.address
-                      }}</td>
-                    <td class="text-truncate" style="max-width: 140px;">{{ customer.registrationDate | date:'dd-MM-yyyy'
-                      }}
-                    </td>
-                    <!-- <td class="text-truncate" title="{{ customer.userNames}}" style="max-width: 150px;"><i
-                        class="bi bi-person text-dark">{{
-                        customer.userNames ? customer.userNames.split(',').length : 0 }}
-                      </i>
-                    </td> -->
-                    <td style="max-width: 80px; cursor: pointer;">
-                      <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary " type="button" [id]="'dropdown_' + customer.id"
-                          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                          <i class="bi bi-three-dots textColor"></i>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right "
-                          [attr.aria-labelledby]="'dropdown_' + customer.id">
-                          <a class="dropdown-item" (click)="show(customer.id)">
-                            Edit
-                          </a>
-                          <a class="dropdown-item" (click)="viewUsers(customer.id)">
-                            View
-                          </a>
-                          <a class="dropdown-item " (click)="deleteCustomer(customer.id)">
-                            Delete
-                          </a>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div *ngIf="customers.length === 0" class="text-center pt-2">
-                <p class="fs-4">No customer records found</p>
-                <i class="bi bi-emoji-frown display-2"></i>
-              </div>
-
-            </div>
-            <!-- Pagination -->
-            <nav aria-label="Customer pagination" *ngIf="totalCount > 0">
-              <div class="d-flex justify-content-between align-items-center">
-
-                <div class="d-flex align-items-center">
-                  <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                      <li class="page-item" [class.disabled]="currentPage === 1">
-                        <button class="page-link" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
-                          <i class="fa fa-chevron-left"></i>
-                        </button>
-                      </li>
-
-                      <li class="page-item" *ngIf="currentPage > 3">
-                        <button class="page-link" (click)="goToPage(1)">1</button>
-                      </li>
-
-                      <li class="page-item disabled" *ngIf="currentPage > 4">
-                        <span class="page-link">...</span>
-                      </li>
-
-                      <li class="page-item" *ngFor="let page of getVisiblePages()"
-                        [class.active]="page === currentPage">
-                        <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
-                      </li>
-
-                      <li class="page-item disabled" *ngIf="currentPage < totalPages - 3">
-                        <span class="page-link">...</span>
-                      </li>
-
-                      <li class="page-item" *ngIf="currentPage < totalPages - 2">
-                        <button class="page-link" (click)="goToPage(totalPages)">{{ totalPages }}</button>
-                      </li>
-
-                      <li class="page-item" [class.disabled]="currentPage === totalPages">
-                        <button class="page-link" (click)="goToPage(currentPage + 1)"
-                          [disabled]="currentPage === totalPages">
-                          <i class="fa fa-chevron-right"></i>
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-                <div class="d-flex align-items-center">
-                  <div class="mr-3">
-                    <select class="form-control form-control-sm" [(ngModel)]="maxResultCount"
-                      (change)="onPageSizeChange()">
-                      <option value="1">1</option>
-                      <option value="5">5</option>
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </nav>
-          </div>
+  <div class="row">
+    <div class="col-12 m-5">
+      <div class="d-flex align-items-center justify-content-between pt-0 mb-2">
+        <h4 class="p-2 mt-3 fw-bolder"><span class="textColor">Customers</span> &ensp; | Manage Customer and Customer
+          user</h4>
+        <div>
+          <button class="btn createBtn px-2 me-2 p-2 rounded-1" (click)="show(null)">
+            <i class="fa fa-plus text-white"></i>
+            <span class="btn-shine">
+              Create New Customer
+            </span>
+          </button>
         </div>
       </div>
     </div>
+
+
+    <div class="col-md-12">
+      <div class="card card-custom bg-transparent mb-4">
+        <div class="card-body ">
+          <div class="d-flex justify-content-between">
+            <h3>Customers</h3>
+            <div class="form-group mb-4 w-50 border border-secondary  rounded-1">
+              <div class="input-group " style="height: 100%;">
+                <input type="text" class="form-control border border-transparent" style="height: 100%;"
+                  [(ngModel)]="keyword" placeholder="Search..." (keyup.enter)="onSearch()">
+                <button class="btn " type="button" (click)="onSearch()">
+                  <i class="fa fa-search textColor fs-3 fw-bolder"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- customer table  -->
+          <div class="table-responsive " style="min-height: 350px;width: 100%; overflow-x: auto;">
+            <table class="table table-hover table-striped table-fixed table-custom">
+              <thead class="thead-dark ">
+                <tr>
+                  <!-- <th>Sr No</th> -->
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Address</th>
+                  <th>Registration Date</th>
+                  <!-- <th>Assigned Users</th> -->
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let customer of customers; let i=index">
+                  <!-- <td class="text-truncate" style="max-width: 60px;">{{ skipCount + i + 1 }}</td> -->
+                  <td class="text-truncate" title="{{ customer.name}}" style="max-width: 120px;">{{ customer.name
+                    }}
+                  </td>
+                  <td class="text-truncate" title="{{ customer.email}}" style="max-width: 150px;">{{
+                    customer.email }}
+                  </td>
+                  <td class="text-truncate" title="{{ customer.address}}" style="max-width: 200px;">{{
+                    customer.address
+                    }}</td>
+                  <td class="text-truncate" style="max-width: 140px;">{{ customer.registrationDate |
+                    date:'dd-MM-yyyy'
+                    }}
+                  </td>
+                  <!-- <td class="text-truncate" title="{{ customer.userNames}}" style="max-width: 150px;"><i
+                  class="bi bi-person text-dark">{{
+                    customer.userNames ? customer.userNames.split(',').length : 0 }}
+                  </i>
+                </td> -->
+                  <td style="max-width: 80px; cursor: pointer;">
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary " type="button" [id]="'dropdown_' + customer.id"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="bi bi-three-dots textColor"></i>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-right "
+                        [attr.aria-labelledby]="'dropdown_' + customer.id">
+                        <a class="dropdown-item" (click)="show(customer.id)">
+                          Edit
+                        </a>
+                        <a class="dropdown-item" (click)="viewUsers(customer.id)">
+                          View
+                        </a>
+                        <a class="dropdown-item " (click)="deleteCustomer(customer.id)">
+                          Delete
+                        </a>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="customers.length === 0" class="text-center pt-2">
+              <p class="fs-4">No customer records found</p>
+              <i class="bi bi-emoji-frown display-2"></i>
+            </div>
+          </div>
+          <!-- Pagination -->
+          <nav aria-label="Customer pagination" *ngIf="totalCount > 0">
+            <div class="d-flex justify-content-between align-items-center">
+
+              <div class="d-flex align-items-center">
+                <nav>
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" [class.disabled]="currentPage === 1">
+                      <button class="page-link" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+                        <i class="fa fa-chevron-left"></i>
+                      </button>
+                    </li>
+
+                    <li class="page-item" *ngIf="currentPage > 3">
+                      <button class="page-link" (click)="goToPage(1)">1</button>
+                    </li>
+
+                    <li class="page-item disabled" *ngIf="currentPage > 4">
+                      <span class="page-link">...</span>
+                    </li>
+
+                    <li class="page-item" *ngFor="let page of getVisiblePages()" [class.active]="page === currentPage">
+                      <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
+                    </li>
+
+                    <li class="page-item disabled" *ngIf="currentPage < totalPages - 3">
+                      <span class="page-link">...</span>
+                    </li>
+
+                    <li class="page-item" *ngIf="currentPage < totalPages - 2">
+                      <button class="page-link" (click)="goToPage(totalPages)">{{ totalPages }}</button>
+                    </li>
+
+                    <li class="page-item" [class.disabled]="currentPage === totalPages">
+                      <button class="page-link" (click)="goToPage(currentPage + 1)"
+                        [disabled]="currentPage === totalPages">
+                        <i class="fa fa-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+              <div class="d-flex align-items-center">
+                <div class="mr-3">
+                  <select class="form-control form-control-sm" [(ngModel)]="maxResultCount"
+                    (change)="onPageSizeChange()">
+                    <option value="1">1</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                  </select>
+                </div>
+              </div>
+
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
   </div>
-
-</body>
-
-</html>
-
+</div>
 <!-- ---------------Modals------- -->
 <div class="modal fade" id="customerModal" tabindex="-1" role="dialog" aria-labelledby="customerModalLabel"
   aria-hidden="true">
   <div class="modal-dialog" role="document" style="max-width: 800px;height: 80vh; ">
     <div class="modal-content">
       <div class="modal-header linearGrad p-2">
-        <h5 class="modal-title text-white" id="customerModalLabel">{{ isEditMode ? 'Edit Customer and Users' : 'Create
+        <h5 class="modal-title text-white" id="customerModalLabel">{{ isEditMode ? 'Edit Customer and Users' :
+          'Create
           New
           Customers and
           Users' }}</h5>
@@ -183,46 +173,48 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form *ngIf="customerForm" [formGroup]="customerForm" (ngSubmit)="save()">
+      <form #customerForm="ngForm" (ngSubmit)=" save(customerForm)" class="shadow-sm p-0">
         <div class="modal-body p-0">
           <div class="container mt-1">
             <div class="row pt-4">
               <div class="col-md-4  ">
                 <div class="form-group">
                   <label for="name">Name<span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="name" formControlName="name">
-                  <div *ngIf="customerForm.controls['name'].invalid && (customerForm.controls['name'].dirty)"
-                    class="text-danger">
-                    <small *ngIf="customerForm.controls['name'].errors?.['required']">Name is required</small>
+                  <input type="text" class="form-control" id="name" name="name" [(ngModel)]="customer.name"
+                    #name="ngModel" required (blur)="customer.name = customer.name?.trim()">
+                  <div *ngIf="name.invalid && name.touched" class="text-danger">
+                    <small *ngIf="name.errors?.['required']">Name is required</small>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 ">
                 <div class="form-group">
                   <label for="email">Email<span class="text-danger">*</span></label>
-                  <input type="email" class="form-control" id="email" formControlName="email">
-                  <div *ngIf="customerForm.controls['email'].invalid && (customerForm.controls['email'].dirty)"
-                    class="text-danger">
-                    <small *ngIf="customerForm.controls['email'].errors?.['required']">Email is required</small>
-                    <small *ngIf="customerForm.controls['email'].errors?.['email']">Please enter a valid email</small>
+                  <input type="email" class="form-control" id="email" name="email" [(ngModel)]="customer.email"
+                    #email="ngModel" required email (blur)="customer.email = customer.email?.trim()">
+                  <div *ngIf="email.invalid && email.touched" class="text-danger">
+                    <small *ngIf="email.errors?.['required']">Email is required</small>
+                    <small *ngIf="email.errors?.['email']">Please enter a valid email</small>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 ">
                 <div class="form-group">
                   <label for="registrationDate">Registration Date</label>
-                  <input type="text" class="form-control" id="registrationDate" formControlName="registrationDate"
-                    bsDatepicker [bsConfig]="datePickerConfig" placeholder="Select date" readonly>
+                  <input type="text" class="form-control" id="registrationDate" name="registrationDate"
+                    [(ngModel)]="customer.registrationDate" bsDatepicker [bsConfig]="datePickerConfig"
+                    placeholder="Select date" readonly>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="phoneNo">Phone No <span class="text-danger">*</span></label>
-                  <input type="tel" class="form-control" id="phoneNo" formControlName="phoneNo">
-                  <div *ngIf="customerForm.controls['phoneNo'].invalid && (customerForm.controls['phoneNo'].dirty)"
-                    class="text-danger">
-                    <small *ngIf="customerForm.controls['phoneNo'].errors?.['required']">Phone number is
-                      required</small>
+                  <input type="tel" class="form-control" id="phoneNo" name="phoneNo" [(ngModel)]="customer.phoneNo"
+                    #phoneNo="ngModel" pattern="[0-9+\-\s()]*" required
+                    (blur)="customer.phoneNo = customer.phoneNo?.trim()">
+                  <div *ngIf="phoneNo.invalid && phoneNo.touched" class="text-danger">
+                    <small *ngIf="phoneNo.errors?.['required']">Phone number is required</small>
+                    <small *ngIf="phoneNo.errors?.['pattern']">!...Invalid</small>
                   </div>
                 </div>
               </div>
@@ -264,14 +256,15 @@
               <div class="col-md-12">
                 <div class="form-group">
                   <label for="address">Address</label>
-                  <textarea class="form-control" id="address" formControlName="address" rows="3"></textarea>
+                  <textarea class="form-control" id="address" name="address" [(ngModel)]="customer.address"
+                    rows="3"></textarea>
                 </div>
               </div>
 
 
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
-                <button type="submit" class="btn btn-primary" [disabled]="!customerForm.valid || saving">
+                <button type="submit" class="btn btn-primary" [disabled]="saving">
                   <i class="fa fa-spin fa-spinner" *ngIf="saving"></i> {{isEditMode? 'Update' :'Save'}}
                 </button>
               </div>
@@ -283,6 +276,7 @@
 
 
       </form>
+
     </div>
   </div>
 </div>
@@ -313,7 +307,8 @@
             </div>
             <div class="col-md-6 mb-3">
               <label class="fw-bold text-muted">Email:</label>
-              <p class="mb-0 text-truncate" title="{{ viewCustomer.email || 'Not provided' }}">{{ viewCustomer.email
+              <p class="mb-0 text-truncate" title="{{ viewCustomer.email || 'Not provided' }}">{{
+                viewCustomer.email
                 ||
                 'Not provided' }}</p>
             </div>
