@@ -118,10 +118,8 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
       });
   }
 
-
    updateAvailableUsers(): void {
-
-    
+   
     this._customerService.getUnassignedUsers()
       .subscribe(result => {
         this.availableUsers = result;
@@ -164,6 +162,7 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
       }
     }
   }
+  
   loadAllUsers(): void {
   const url = AppConsts.remoteServiceBaseUrl + '/api/services/app/User/GetUsers';
   
@@ -244,7 +243,6 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   const user = this.availableUsers.find(u => u.id === userId);
   return user ? user.userName : '';
 }
-
 
   getCustomers(): void {
     this._customerService

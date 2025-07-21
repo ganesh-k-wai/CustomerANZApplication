@@ -20,6 +20,10 @@ namespace MyTraining1101Demo.EntityFrameworkCore
         /* Define an IDbSet for each entity of the application */
         public DbSet<Customer> Customers { get; set; }
 
+
+
+        public DbSet<CustomerUser> CustomerUsers { get; set; }
+
         public virtual DbSet<BinaryObject> BinaryObjects { get; set; }
 
         public virtual DbSet<Friendship> Friendships { get; set; }
@@ -47,6 +51,7 @@ namespace MyTraining1101Demo.EntityFrameworkCore
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
 
             modelBuilder.Entity<BinaryObject>(b =>
             {
@@ -95,6 +100,28 @@ namespace MyTraining1101Demo.EntityFrameworkCore
             });
 
             modelBuilder.ConfigurePersistedGrantEntity();
+
+            // Configure CustomerUser relationship
+            modelBuilder.Entity<CustomerUser>(entity =>
+            {
+                entity.ToTable("CustomerUsers");
+
+                // Configure relationships
+                entity.HasOne(cu => cu.Customer)
+                      .WithMany(c => c.CustomerUsers)
+                      .HasForeignKey(cu => cu.CustomerId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(cu => cu.User)
+                      .WithMany()
+                      .HasForeignKey(cu => cu.UserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Create unique constraint
+                entity.HasIndex(cu => new { cu.CustomerId, cu.UserId })
+                      .IsUnique()
+                      .HasDatabaseName("IX_CustomerUsers_CustomerId_UserId_Unique");
+            });
         }
     }
 }

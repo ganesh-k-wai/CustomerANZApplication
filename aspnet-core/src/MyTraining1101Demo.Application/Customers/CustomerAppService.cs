@@ -5,117 +5,97 @@ using Abp.Domain.Repositories;
 using Abp.Linq.Extensions;
 using Abp.ObjectMapping;
 using Abp.UI;
+using Castle.Core.Resource;
 using Microsoft.EntityFrameworkCore;
 using MyTraining1101Demo.Authorization.Users;
 using MyTraining1101Demo.Customers.Dtos;
-using Newtonsoft.Json;
-using System;
+using Stripe;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
 namespace MyTraining1101Demo.Customers
 {
     public class CustomerAppService : ApplicationService, ICustomerAppService
     {
         private readonly IRepository<Customer> _customerRepository;
+        private readonly IRepository<CustomerUser> _customerUserRepository;
         private readonly IRepository<User, long> _userRepository;
         private readonly IObjectMapper _objectMapper;
 
         public CustomerAppService(
             IRepository<Customer> customerRepository,
-            IRepository<User, long> userRepository,
-            IObjectMapper objectMapper)
+    IRepository<User, long> userRepository,
+    IRepository<CustomerUser> customerUserRepository, // ADD THIS
+    IObjectMapper objectMapper)
         {
             _customerRepository = customerRepository;
             _userRepository = userRepository;
+            _customerUserRepository = customerUserRepository;
             _objectMapper = objectMapper;
         }
 
         // GET: /api/services/app/Customer/GetAll
         public async Task<PagedResultDto<CustomerDto>> GetAll(GetAllCustomersInput input)
         {
-            
-                var filter = input.Filter?.Trim() ?? string.Empty;
+            var filter = input.Filter?.Trim() ?? string.Empty;
 
-                var query = _customerRepository.GetAll()
-                    .WhereIf(!string.IsNullOrWhiteSpace(filter),
-                        c => c.Name.Contains(filter) ||
-                             c.Email.Contains(filter) ||
-                             c.Address.Contains(filter));
+            var query = _customerRepository.GetAll()
+                .WhereIf(!string.IsNullOrWhiteSpace(filter),
+                    c => c.Name.Contains(filter) ||
+                         c.Email.Contains(filter) ||
+                         c.Address.Contains(filter));
 
-                var totalCount = await query.CountAsync();
+            var totalCount = await query.CountAsync();
 
-                var customers = await query
-                    .OrderBy(c => c.Name)
-                    .Skip(input.SkipCount)
-                    .Take(input.MaxResultCount)
-                    .ToListAsync();
+            var customers = await query
+                .OrderBy(c => c.Name)
+                .Skip(input.SkipCount)
+                .Take(input.MaxResultCount)
+                .ToListAsync();
 
-                var customerDtos = ObjectMapper.Map<List<CustomerDto>>(customers);
+            var customerDtos = _objectMapper.Map<List<CustomerDto>>(customers);
 
-                var allUserIds = new List<long>();
-                foreach (var customer in customers)
-                {
-                    if (!string.IsNullOrEmpty(customer.UserIds))
-                    {
-                        try
-                        {
-                            var userIds = JsonConvert.DeserializeObject<List<long>>(customer.UserIds);
-                            allUserIds.AddRange(userIds);
-                        }
-                        catch
-                        {
-                        }
-                    }
-                }
+            var customerIds = customers.Select(c => c.Id).ToList();
 
-                var users = new Dictionary<long, string>();
-                if (allUserIds.Any())
-                {
-                    var userList = await _userRepository
-                        .GetAll()
-                        .Where(u => allUserIds.Contains(u.Id))
-                        .Select(u => new { u.Id, u.UserName })
-                        .ToListAsync();
+            // Fetch all mappings
+            var mappings = await _customerUserRepository.GetAll()
+                .Where(cu => customerIds.Contains(cu.CustomerId))
+                .Include(cu => cu.User)
+                .ToListAsync();
 
-                    users = userList.ToDictionary(u => u.Id, u => u.UserName);
-                }
 
-                foreach (var dto in customerDtos)
-                {
-                    var customer = customers.FirstOrDefault(c => c.Id == dto.Id);
-                    if (customer != null && !string.IsNullOrEmpty(customer.UserIds))
-                    {
-                        try
-                        {
-                            var userIds = JsonConvert.DeserializeObject<List<long>>(customer.UserIds);
-                            var userNames = userIds
-                                .Where(id => users.ContainsKey(id))
-                                .Select(id => users[id])
-                                .ToList();
+            foreach (var dto in customerDtos)
+            {
+                var assignedUsers = mappings
+                    .Where(cu => cu.CustomerId == dto.Id)
+                    .Select(cu => cu.User?.UserName)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .ToList();
 
-                            dto.UserNames = string.Join(", ", userNames); 
-                        }
-                        catch
-                        {
-                            dto.UserNames = ""; 
-                        }
-                    }
-                    else
-                    {
-                        dto.UserNames = "";
-                    }
-                }
+                dto.UserNames = string.Join(", ", assignedUsers);
+            }
 
-                return new PagedResultDto<CustomerDto>(totalCount, customerDtos);
-            
-            
+            return new PagedResultDto<CustomerDto>(totalCount, customerDtos);
         }
 
         // GET: /api/services/app/Customer/GetCustomerForEdit?id=1
         public async Task<GetCustomerForEditOutput> GetCustomerForEdit(int id)
         {
             var customer = await _customerRepository.GetAsync(id);
+
+
+            var assignedUserIds = await _customerUserRepository
+           .GetAll()
+           .Where(cu => cu.CustomerId == customer.Id)
+           .Select(cu => cu.UserId)
+           .ToListAsync();
+
+            var userIds = await _customerUserRepository
+                .GetAll()
+                .Where(x => x.CustomerId == customer.Id)
+                .Select(x => x.UserId)
+                .ToListAsync();
 
             return new GetCustomerForEditOutput
             {
@@ -127,9 +107,9 @@ namespace MyTraining1101Demo.Customers
                     RegistrationDate = customer.RegistrationDate,
                     PhoneNo = customer.PhoneNo,
                     Address = customer.Address,
-                    UserIds = customer.UserIdsList // Convert from JSON to List
+                    UserIds = assignedUserIds
                 },
-                AssignedUserIds = customer.UserIdsList
+                AssignedUserIds = assignedUserIds
             };
         }
 
@@ -137,13 +117,9 @@ namespace MyTraining1101Demo.Customers
         public async Task CreateOrEdit(CreateOrEditCustomerDto input)
         {
             if (input.Id.HasValue)
-            {
                 await UpdateCustomer(input);
-            }
             else
-            {
                 await CreateCustomer(input);
-            }
         }
 
         private async Task CreateCustomer(CreateOrEditCustomerDto input)
@@ -154,12 +130,23 @@ namespace MyTraining1101Demo.Customers
                 Email = input.Email,
                 RegistrationDate = input.RegistrationDate,
                 PhoneNo = input.PhoneNo,
-                Address = input.Address,
-                UserIdsList = input.UserIds 
+                Address = input.Address
             };
 
             await _customerRepository.InsertAsync(customer);
+            await CurrentUnitOfWork.SaveChangesAsync(); // to get generated ID
+
+            // Insert mappings to CustomerUser table
+            foreach (var userId in input.UserIds)
+            {
+                await _customerUserRepository.InsertAsync(new CustomerUser
+                {
+                    CustomerId = customer.Id,
+                    UserId = userId
+                });
+            }
         }
+
 
         private async Task UpdateCustomer(CreateOrEditCustomerDto input)
         {
@@ -170,30 +157,48 @@ namespace MyTraining1101Demo.Customers
             customer.RegistrationDate = input.RegistrationDate;
             customer.PhoneNo = input.PhoneNo;
             customer.Address = input.Address;
-            customer.UserIdsList = input.UserIds; 
 
             await _customerRepository.UpdateAsync(customer);
+
+            // Delete existing user mappings
+            var existingMappings = await _customerUserRepository
+                .GetAll()
+                .Where(cu => cu.CustomerId == customer.Id)
+                .ToListAsync();
+
+            foreach (var mapping in existingMappings)
+            {
+                await _customerUserRepository.DeleteAsync(mapping);
+            }
+
+            // Insert new user mappings
+            foreach (var userId in input.UserIds)
+            {
+                await _customerUserRepository.InsertAsync(new CustomerUser
+                {
+                    CustomerId = customer.Id,
+                    UserId = userId
+                });
+            }
         }
+
 
         // DELETE: /api/services/app/Customer/Delete?id=1
         public async Task Delete(EntityDto input)
         {
             await _customerRepository.DeleteAsync(input.Id);
+            await _customerUserRepository.DeleteAsync(x => x.CustomerId == input.Id);
         }
 
         // GET: /api/services/app/Customer/GetUnassignedUsers
         public async Task<List<UserLookupDto>> GetUnassignedUsers()
         {
-            // Get all assigned user IDs from all customers
-            var allCustomers = await _customerRepository.GetAllListAsync();
-            var assignedUserIds = new List<long>();
+            var assignedUserIds = await _customerUserRepository
+                .GetAll()
+                .Select(x => x.UserId)
+                .Distinct()
+                .ToListAsync();
 
-            foreach (var customer in allCustomers)
-            {
-                assignedUserIds.AddRange(customer.UserIdsList);
-            }
-
-            // Get users not in assigned list
             var unassignedUsers = await _userRepository
                 .GetAll()
                 .Where(u => !assignedUserIds.Contains(u.Id))
@@ -209,7 +214,5 @@ namespace MyTraining1101Demo.Customers
 
             return unassignedUsers;
         }
-
-        
     }
 }

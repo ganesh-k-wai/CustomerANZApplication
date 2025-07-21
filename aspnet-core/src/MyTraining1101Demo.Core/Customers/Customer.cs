@@ -21,22 +21,12 @@ namespace MyTraining1101Demo.Customers
 
         public string Address { get; set; }
 
-        public string UserIds { get; set; } 
-
-        [NotMapped]
-        public List<long> UserIdsList
+        public virtual ICollection<CustomerUser> CustomerUsers { get; set; }
+        public Customer()
         {
-            get
-            {
-                if (string.IsNullOrEmpty(UserIds))
-                    return new List<long>();
-
-                return JsonConvert.DeserializeObject<List<long>>(UserIds);
-            }
-            set
-            {
-                UserIds = JsonConvert.SerializeObject(value);
-            }
+            CustomerUsers = new HashSet<CustomerUser>();
         }
+
+       
     }
 }
