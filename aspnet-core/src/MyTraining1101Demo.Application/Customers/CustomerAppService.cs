@@ -34,11 +34,9 @@ namespace MyTraining1101Demo.Customers
         // GET: /api/services/app/Customer/GetAll
         public async Task<PagedResultDto<CustomerDto>> GetAll(GetAllCustomersInput input)
         {
-            try
-            {
+            
                 var filter = input.Filter?.Trim() ?? string.Empty;
 
-                // Remove the .GetAllIncluding(c => c.User) since we don't have User navigation property anymore
                 var query = _customerRepository.GetAll()
                     .WhereIf(!string.IsNullOrWhiteSpace(filter),
                         c => c.Name.Contains(filter) ||
@@ -55,7 +53,6 @@ namespace MyTraining1101Demo.Customers
 
                 var customerDtos = ObjectMapper.Map<List<CustomerDto>>(customers);
 
-                // Get all user IDs and fetch user data in batch
                 var allUserIds = new List<long>();
                 foreach (var customer in customers)
                 {
@@ -68,12 +65,10 @@ namespace MyTraining1101Demo.Customers
                         }
                         catch
                         {
-                            // Handle invalid JSON gracefully
                         }
                     }
                 }
 
-                // Fetch all users in one query
                 var users = new Dictionary<long, string>();
                 if (allUserIds.Any())
                 {
@@ -86,7 +81,6 @@ namespace MyTraining1101Demo.Customers
                     users = userList.ToDictionary(u => u.Id, u => u.UserName);
                 }
 
-                // Map user names to customer DTOs
                 foreach (var dto in customerDtos)
                 {
                     var customer = customers.FirstOrDefault(c => c.Id == dto.Id);
@@ -100,11 +94,11 @@ namespace MyTraining1101Demo.Customers
                                 .Select(id => users[id])
                                 .ToList();
 
-                            dto.UserNames = string.Join(", ", userNames); // Show multiple user names
+                            dto.UserNames = string.Join(", ", userNames); 
                         }
                         catch
                         {
-                            dto.UserNames = ""; // Handle invalid JSON
+                            dto.UserNames = ""; 
                         }
                     }
                     else
@@ -114,11 +108,8 @@ namespace MyTraining1101Demo.Customers
                 }
 
                 return new PagedResultDto<CustomerDto>(totalCount, customerDtos);
-            }
-            catch (Exception ex)
-            {
-                throw new UserFriendlyException("An error occurred while retrieving customers.", ex);
-            }
+            
+            
         }
 
         // GET: /api/services/app/Customer/GetCustomerForEdit?id=1
@@ -164,7 +155,7 @@ namespace MyTraining1101Demo.Customers
                 RegistrationDate = input.RegistrationDate,
                 PhoneNo = input.PhoneNo,
                 Address = input.Address,
-                UserIdsList = input.UserIds // This will convert to JSON automatically
+                UserIdsList = input.UserIds 
             };
 
             await _customerRepository.InsertAsync(customer);
@@ -179,7 +170,7 @@ namespace MyTraining1101Demo.Customers
             customer.RegistrationDate = input.RegistrationDate;
             customer.PhoneNo = input.PhoneNo;
             customer.Address = input.Address;
-            customer.UserIdsList = input.UserIds; // Update user IDs
+            customer.UserIdsList = input.UserIds; 
 
             await _customerRepository.UpdateAsync(customer);
         }

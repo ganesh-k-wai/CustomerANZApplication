@@ -9,7 +9,7 @@
 
 <body>
 
-  <div class="container border border-danger">
+  <div class="container shadow-lg">
 
     <div class="row">
       <div class="col-12 m-5">
@@ -46,18 +46,18 @@
               <table class="table table-hover table-striped table-fixed table-custom">
                 <thead class="thead-dark ">
                   <tr>
-                    <th>Sr No</th>
+                    <!-- <th>Sr No</th> -->
                     <th>Name</th>
                     <th>Email</th>
                     <th>Address</th>
                     <th>Registration Date</th>
-                    <th>Assigned Users</th>
+                    <!-- <th>Assigned Users</th> -->
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let customer of customers; let i=index">
-                    <td class="text-truncate" style="max-width: 60px;">{{ skipCount + i + 1 }}</td>
+                    <!-- <td class="text-truncate" style="max-width: 60px;">{{ skipCount + i + 1 }}</td> -->
                     <td class="text-truncate" title="{{ customer.name}}" style="max-width: 120px;">{{ customer.name }}
                     </td>
                     <td class="text-truncate" title="{{ customer.email}}" style="max-width: 150px;">{{ customer.email }}
@@ -68,12 +68,12 @@
                     <td class="text-truncate" style="max-width: 140px;">{{ customer.registrationDate | date:'dd-MM-yyyy'
                       }}
                     </td>
-                    <td class="text-truncate" title="{{ customer.userNames}}" style="max-width: 150px;"><i
+                    <!-- <td class="text-truncate" title="{{ customer.userNames}}" style="max-width: 150px;"><i
                         class="bi bi-person text-dark">{{
                         customer.userNames ? customer.userNames.split(',').length : 0 }}
                       </i>
-                    </td>
-                    <td style="max-width: 80px;">
+                    </td> -->
+                    <td style="max-width: 80px; cursor: pointer;">
                       <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary " type="button" [id]="'dropdown_' + customer.id"
                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -173,25 +173,25 @@
 <div class="modal fade" id="customerModal" tabindex="-1" role="dialog" aria-labelledby="customerModalLabel"
   aria-hidden="true">
   <div class="modal-dialog" role="document" style="max-width: 800px;height: 80vh; ">
-    <div class="modal-content" style="border: 1px solid orangered;">
-      <div class="modal-header linearGrad">
-        <h5 class="modal-title" id="customerModalLabel">{{ isEditMode ? 'Edit Customer and Users' : 'Create New
+    <div class="modal-content">
+      <div class="modal-header linearGrad p-2">
+        <h5 class="modal-title text-white" id="customerModalLabel">{{ isEditMode ? 'Edit Customer and Users' : 'Create
+          New
           Customers and
           Users' }}</h5>
-        <button type="button" class="close fs-1" (click)="cancel()" aria-label="Close">
+        <button type="button" class="close fs-1 text-white me-2" (click)="cancel()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <form *ngIf="customerForm" [formGroup]="customerForm" (ngSubmit)="save()">
         <div class="modal-body p-0">
           <div class="container mt-1">
-            <div class="row ">
+            <div class="row pt-4">
               <div class="col-md-4  ">
                 <div class="form-group">
-                  <label for="name">Name</label>
+                  <label for="name">Name<span class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="name" formControlName="name">
-                  <div
-                    *ngIf="customerForm.controls['name'].invalid && (customerForm.controls['name'].dirty || customerForm.controls['name'].touched)"
+                  <div *ngIf="customerForm.controls['name'].invalid && (customerForm.controls['name'].dirty)"
                     class="text-danger">
                     <small *ngIf="customerForm.controls['name'].errors?.['required']">Name is required</small>
                   </div>
@@ -199,10 +199,9 @@
               </div>
               <div class="col-md-4 ">
                 <div class="form-group">
-                  <label for="email">Email</label>
+                  <label for="email">Email<span class="text-danger">*</span></label>
                   <input type="email" class="form-control" id="email" formControlName="email">
-                  <div
-                    *ngIf="customerForm.controls['email'].invalid && (customerForm.controls['email'].dirty || customerForm.controls['email'].touched)"
+                  <div *ngIf="customerForm.controls['email'].invalid && (customerForm.controls['email'].dirty)"
                     class="text-danger">
                     <small *ngIf="customerForm.controls['email'].errors?.['required']">Email is required</small>
                     <small *ngIf="customerForm.controls['email'].errors?.['email']">Please enter a valid email</small>
@@ -218,37 +217,50 @@
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="phoneNo">Phone No</label>
+                  <label for="phoneNo">Phone No <span class="text-danger">*</span></label>
                   <input type="tel" class="form-control" id="phoneNo" formControlName="phoneNo">
-                  <div
-                    *ngIf="customerForm.controls['phoneNo'].invalid && (customerForm.controls['phoneNo'].dirty || customerForm.controls['phoneNo'].touched)"
+                  <div *ngIf="customerForm.controls['phoneNo'].invalid && (customerForm.controls['phoneNo'].dirty)"
                     class="text-danger">
                     <small *ngIf="customerForm.controls['phoneNo'].errors?.['required']">Phone number is
                       required</small>
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label>Assign Users</label>
-                  <div class="border rounded p-3" style="max-height: 60px; overflow-y: auto;">
-                    <div *ngIf="availableUsers.length === 0" class="text-muted text-center py-3">
-                      No users available
-                    </div>
-                    <div *ngFor="let user of availableUsers" class="form-check mb-2">
-                      <input type="checkbox" class="form-check-input" [id]="'user_' + user.id"
-                        [checked]="selectedUserIds.includes(user.id)"
-                        (change)="onUserCheckboxChange(user.id, $event.target.checked)">
-                      <label class="form-check-label" [for]="'user_' + user.id">
-                        {{ user.name }} {{ user.surname }}
-                      </label>
-                    </div>
+
+              <!-- new dropdown  -->
+              <div class="col-md-6 mb-3">
+                <label class="">Add Users <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <div class="dropdown w-100">
+                    <button class="btn dropdown-toggle border border-grey w-100 text-start" type="button"
+                      id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Select Assigned User
+                    </button>
+
+                    <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuButton"
+                      style="padding: 10px; max-height: 200px; overflow-y: auto;" (click)="$event.stopPropagation()">
+                      <li class="dropdown-item-custom" *ngFor="let user of availableUsers"
+                        (click)="$event.stopPropagation()">
+                        <div class="form-check d-flex align-items-center">
+                          <input type="checkbox" class="form-check-input me-2" [id]="'user_' + user.id"
+                            [checked]="selectedUserIds.includes(user.id)"
+                            (change)="onUserCheckboxChange(user.id, $event)" (click)="$event.stopPropagation()">
+                          <label class="form-check-label flex-grow-1" [for]="'user_' + user.id"
+                            style="cursor: pointer;">
+                            <strong>{{ user.userName }}</strong><br>
+                            <small class="text-muted">{{ user.name }} {{ user.surname }}</small>
+                          </label>
+                        </div>
+                      </li>
+                      <li *ngIf="availableUsers.length === 0" class="dropdown-item text-center text-muted">
+                        No users available
+                      </li>
+                    </ul>
+
                   </div>
-                  <small class="text-muted mt-1">
-                    Selected: {{ selectedUserIds.length }} user(s)
-                  </small>
                 </div>
               </div>
+
               <div class="col-md-12">
                 <div class="form-group">
                   <label for="address">Address</label>
@@ -256,17 +268,20 @@
                 </div>
               </div>
 
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+                <button type="submit" class="btn btn-primary" [disabled]="!customerForm.valid || saving">
+                  <i class="fa fa-spin fa-spinner" *ngIf="saving"></i> {{isEditMode? 'Update' :'Save'}}
+                </button>
+              </div>
+
             </div>
           </div>
+        </div>
 
 
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
-          <button type="submit" class="btn btn-primary" [disabled]="!customerForm.valid || saving">
-            <i class="fa fa-spin fa-spinner" *ngIf="saving"></i> Save
-          </button>
-        </div>
+
       </form>
     </div>
   </div>
@@ -277,10 +292,10 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header linearGrad text-white p-2">
-        <h5 class="modal-title textColor" id="viewCustomerModalLabel">
+        <h5 class="modal-title text-white" id="viewCustomerModalLabel">
           Customers and User Details
         </h5>
-        <button type="button" class="close me-2  fs-1" (click)="closeViewModal()" aria-label="Close">
+        <button type="button" class="close me-2  fs-1 text-white" (click)="closeViewModal()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -288,7 +303,7 @@
         <div class="container-fluid py-3">
           <div class="row mb-4">
             <div class="col-12">
-              <h6 class=" border-bottom pb-2 mb-3 textColor">
+              <h6 class=" border-bottom pb-2 mb-3 ">
                 <i class="fa fa-user me-2"></i>Customer Information
               </h6>
             </div>
@@ -298,12 +313,14 @@
             </div>
             <div class="col-md-6 mb-3">
               <label class="fw-bold text-muted">Email:</label>
-              <p class="mb-0 text-truncate" title="{{ viewCustomer.email || 'Not provided' }}">{{ viewCustomer.email ||
+              <p class="mb-0 text-truncate" title="{{ viewCustomer.email || 'Not provided' }}">{{ viewCustomer.email
+                ||
                 'Not provided' }}</p>
             </div>
             <div class="col-md-6 mb-3">
               <label class="fw-bold text-muted">Phone Number:</label>
-              <p class="mb-0 text-truncate" title="{{ viewCustomer.phoneNo || 'Not provided' }}">{{ viewCustomer.phoneNo
+              <p class="mb-0 text-truncate" title="{{ viewCustomer.phoneNo || 'Not provided' }}">{{
+                viewCustomer.phoneNo
                 || 'Not provided' }}</p>
             </div>
             <div class="col-md-6 mb-3">
@@ -312,14 +329,15 @@
             </div>
             <div class="col-12 mb-3">
               <label class="fw-bold text-muted">Address:</label>
-              <p class="mb-0 text-truncate" title="{{ viewCustomer.address || 'Not provided' }}">{{ viewCustomer.address
+              <p class="mb-0 text-truncate" title="{{ viewCustomer.address || 'Not provided' }}">{{
+                viewCustomer.address
                 || 'Not provided' }}</p>
             </div>
           </div>
 
           <div class="row">
             <div class="col-12">
-              <h6 class=" border-bottom pb-2 mb-3 textColor">
+              <h6 class=" border-bottom pb-2 mb-3 ">
                 <i class="fa fa-users me-2"></i>Assigned Users
                 <span class="badge  ms-2">{{ assignedUsers.length }}</span>
               </h6>
@@ -339,11 +357,11 @@
                 </div>
 
                 <!-- Users table -->
-                <div class="table-responsive" style="min-height: 350px;width: 100%; overflow-x: auto;">
+                <div class="table-responsive">
                   <table class="table table-hover table-bordered table-sm table-custom" style="overflow-y: scroll;">
                     <thead class="thead-light">
                       <tr>
-                        <th>Sr No</th>
+                        <!-- <th>Sr No</th> -->
                         <th>Username</th>
                         <th>Name</th>
                         <th>Email</th>
@@ -351,11 +369,10 @@
                     </thead>
                     <tbody>
                       <tr *ngFor="let user of assignedUsers; let i = index">
-                        <td>{{ i + 1 }}</td>
+                        <!-- <td>{{ i + 1 }}</td> -->
                         <td>{{ user.userName }}</td>
                         <td>{{ user.name }} {{ user.surname }}</td>
                         <td>{{ user.emailAddress || 'N/A' }}</td>
-
                       </tr>
                     </tbody>
                   </table>

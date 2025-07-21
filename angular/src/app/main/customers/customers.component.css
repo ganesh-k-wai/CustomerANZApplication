@@ -2,7 +2,7 @@
     color: rgba(41, 170, 209, 0.8) !important;
 }
 .createBtn{
-    background-color: orangered !important;
+    background-color: #2994E9 !important;
     color: white !important;
 }
 .table-custom th,
@@ -11,29 +11,7 @@
 }
 
 .linearGrad{
-    background-image:linear-gradient(to right , rgb(252, 166, 134), white) !important;
+    background-color: rgb(12, 12, 75);
+  color: white !important;
 }
-.btn-shine {
-  transform: translate(-50%, -50%);
-  color: #ffffff;
-  background: linear-gradient(to right, #070707 0, white 100%, #6e6e6e 20%);
-  background-position: 0;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shine 7s infinite linear;
-  animation-fill-mode: forwards;
-  -webkit-text-size-adjust: none;
-    text-decoration: none;
-  white-space: nowrap;
-}
-@keyframes shine {
-  0% {
-    background-position: 0px;
-  }
-
-  100% {
-    background-position: 300px;
-  }
-}
-
 

@@ -37,14 +37,12 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   totalCount = 0;
   Math = Math;
   availableUsers: UserLookupDto[] = [];
- selectedUserIds: number[] = [];
+  selectedUserIds: number[] = [];
   allUsers: UserLookupDto[] = [];
 
   userSearchText: string = ''; 
   filteredUsers: UserLookupDto[] = [];
 
-
-  
   customerForm: FormGroup;
   isEditMode = false;
   saving = false;
@@ -69,7 +67,7 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
     datePickerConfig: Partial<BsDatepickerConfig> = {
     containerClass: 'theme-default',
     showWeekNumbers: false,
-    dateInputFormat: 'YYYY-MM-DD'
+    dateInputFormat: 'DD-MM-YYYY'
   };
 
   initializeForm(): void {
@@ -87,39 +85,52 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
     return this.customerForm.get('userIds') as FormArray;
   }
 
-loadAllUsers(): void {
-  const url = AppConsts.remoteServiceBaseUrl + '/api/services/app/User/GetUsers';
-  
-  const userInput = new GetUsersInput();
-  userInput.filter = '';
-  userInput.onlyLockedUsers = false;
-  userInput.skipCount = 0;
-  userInput.maxResultCount = 1000;
-  
-  this.http.post<any>(url, userInput)
-    .subscribe((result: any) => {
-      this.allUsers = result.result?.items || [];
-      this.updateAvailableUsers();
-    }, error => {
-      this.notify.error('Failed to load users');
-      console.error('Error loading users:', error);
-    });
-}
+ save(): void {
+    if (this.customerForm.invalid) {
+      return;
+    }
 
-  updateAvailableUsers(): void {
+    this.saving = true;
+    const customerDto = new CreateOrEditCustomerDto();
+    customerDto.id = this.currentCustomerId || undefined;
+    customerDto.name = this.customerForm.get('name').value;
+    customerDto.email = this.customerForm.get('email').value;
+  customerDto.phoneNo = this.customerForm.get('phoneNo').value;
+  
+
+    const registrationDate = this.customerForm.get('registrationDate').value;
+    customerDto.registrationDate = registrationDate;
+      
+    customerDto.address = this.customerForm.get('address').value;
+    customerDto.userIds = this.selectedUserIds;
+
+    this._customerService.createOrEdit(customerDto)
+      .pipe(finalize(() => this.saving = false))
+      .subscribe(() => {
+        if (this.isEditMode) {
+          this.notify.success('Customer updated successfully');
+        } else {
+          this.notify.success('Customer created successfully');
+        }
+        this.cancel(); 
+        this.getCustomers();
+          this.loadAllUsers(); 
+      });
+  }
+
+
+   updateAvailableUsers(): void {
 
     
     this._customerService.getUnassignedUsers()
       .subscribe(result => {
         this.availableUsers = result;
         
-        // If in edit mode, add currently assigned users to available list
         if (this.isEditMode && this.selectedUserIds.length > 0) {
           const currentlyAssignedUsers = this.allUsers.filter(user => 
             this.selectedUserIds.includes(user.id)
           );
           
-          // Merge available users with currently assigned users (avoid duplicates)
           currentlyAssignedUsers.forEach(assignedUser => {
             if (!this.availableUsers.find(u => u.id === assignedUser.id)) {
               this.availableUsers.push(assignedUser);
@@ -153,6 +164,24 @@ loadAllUsers(): void {
       }
     }
   }
+  loadAllUsers(): void {
+  const url = AppConsts.remoteServiceBaseUrl + '/api/services/app/User/GetUsers';
+  
+  const userInput = new GetUsersInput();
+  userInput.filter = '';
+  userInput.onlyLockedUsers = false;
+  userInput.skipCount = 0;
+  userInput.maxResultCount = 1000;
+  
+  this.http.post<any>(url, userInput)
+    .subscribe((result: any) => {
+      this.allUsers = result.result?.items || [];
+      this.updateAvailableUsers();
+    }, error => {
+      this.notify.error('Failed to load users');
+      console.error('Error loading users:', error);
+    });
+ }
 
   show(id: number | null): void {
     this.currentCustomerId = id;
@@ -189,58 +218,19 @@ loadAllUsers(): void {
     }
   }
 
- private showModal(): void {
+  private showModal(): void {
     setTimeout(() => {
       if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
         $('#customerModal').modal('show');
       }
     }, 100);
   }
-
   private hideModal(): void {
     if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
       $('#customerModal').modal('hide');
     }
   }
   
-  save(): void {
-    if (this.customerForm.invalid) {
-      return;
-    }
-
-    this.saving = true;
-    const customerDto = new CreateOrEditCustomerDto();
-    customerDto.id = this.currentCustomerId || undefined;
-    customerDto.name = this.customerForm.get('name').value;
-    customerDto.email = this.customerForm.get('email').value;
-  customerDto.phoneNo = this.customerForm.get('phoneNo').value;
-  
-
-    const registrationDate = this.customerForm.get('registrationDate').value;
-    customerDto.registrationDate = registrationDate;
-      
-    customerDto.address = this.customerForm.get('address').value;
-    customerDto.userIds = this.selectedUserIds;
-
-    this._customerService.createOrEdit(customerDto)
-      .pipe(finalize(() => this.saving = false))
-      .subscribe(() => {
-        if (this.isEditMode) {
-          this.notify.success('Customer updated successfully');
-        } else {
-          this.notify.success('Customer created successfully');
-        }
-        this.cancel(); 
-        this.getCustomers();
-          this.loadAllUsers(); 
-      });
-  }
-
- getUserNameById(userId: number): string {
-  const user = this.availableUsers.find(u => u.id === userId);
-  return user ? user.userName : '';
-}
-
   cancel(): void {
     this.customerForm.reset();
     this.currentCustomerId = null;
@@ -249,6 +239,12 @@ loadAllUsers(): void {
     this.selectedUserIds = [];
     this.hideModal();
   }
+
+ getUserNameById(userId: number): string {
+  const user = this.availableUsers.find(u => u.id === userId);
+  return user ? user.userName : '';
+}
+
 
   getCustomers(): void {
     this._customerService
@@ -259,7 +255,7 @@ loadAllUsers(): void {
         this.totalCount = result.totalCount;
       });
   }
-
+  //pagination
   onSearch(): void {
     this.skipCount = 0;
     this.getCustomers();
@@ -267,7 +263,6 @@ loadAllUsers(): void {
 get currentPage(): number {
   return Math.floor(this.skipCount / this.maxResultCount) + 1;
 }
-
 get totalPages(): number {
   return Math.ceil(this.totalCount / this.maxResultCount);
 }
@@ -293,25 +288,21 @@ getVisiblePages(): number[] {
 
   return pages;
 }
-
 goToPage(page: number): void {
   if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
     this.skipCount = (page - 1) * this.maxResultCount;
     this.getCustomers();
   }
 }
-
 onPageSizeChange(): void {
   this.skipCount = 0; 
   this.getCustomers();
 }
-
 previousPage(): void {
   if (this.currentPage > 1) {
     this.goToPage(this.currentPage - 1);
   }
 }
-
 nextPage(): void {
   if (this.currentPage < this.totalPages) {
     this.goToPage(this.currentPage + 1);
@@ -354,22 +345,21 @@ filterUsers(): void {
     (user.emailAddress && user.emailAddress.toLowerCase().includes(searchText))
   );
 }
-
-   viewCustomer: any = null;
-  assignedUsers: UserLookupDto[] = [];
+    //view modal 
+   viewCustomer: any = null; 
+  assignedUsers: UserLookupDto[] = [];  
   viewUsers(id: number): void {
     const customer = this.customers.find(c => c.id === id);
     if (!customer) {
       this.notify.error('Customer not found');
+      console.log("eerrrrrrrrroe")
       return;
     }
 
     // Set the customer data for viewing
     this.viewCustomer = customer;
     this.userSearchText = '';
-    // Get assigned users for this customer
     if (customer.userNames && customer.userNames.trim() !== '') {
-      // Parse the userNames string and match with allUsers
       const userNameArray = customer.userNames.split(',').map(name => name.trim());
       
       this.assignedUsers = this.allUsers.filter(user => 
@@ -381,7 +371,6 @@ filterUsers(): void {
       this.filteredUsers = [];
     }
 
-    // Show the view modal
     this.showViewModal();
   }
   private showViewModal(): void {
@@ -391,6 +380,7 @@ filterUsers(): void {
       }
     }, 100);
   }
+
   closeViewModal(): void {
     if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
       $('#viewCustomerModal').modal('hide');
