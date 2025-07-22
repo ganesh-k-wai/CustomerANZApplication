@@ -20,6 +20,8 @@ import { Observable } from 'rxjs';
 import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { AppConsts } from '@shared/AppConsts';
 import { HttpClient } from '@angular/common/http';
+import { NgForm } from '@angular/forms';
+
 declare var $: any;
 
 @Component({
@@ -29,6 +31,8 @@ declare var $: any;
   animations: [appModuleAnimation()]
 })
 export class CustomersComponent extends AppComponentBase implements OnInit {
+    @ViewChild('customerForm') customerForm: NgForm;
+
   customers: CustomerDto[] = [];
   keyword = '';
   skipCount = 0;
@@ -42,7 +46,6 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   userSearchText: string = ''; 
   filteredUsers: UserLookupDto[] = [];
 
-  // Template-driven form model
   customer: any = {
     name: '',
     email: '',
@@ -77,7 +80,6 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
 
  save(form: any): void {
     if (form.invalid) {
-      // Mark all fields as touched to show validation errors
       Object.keys(form.controls).forEach(key => {
         form.controls[key].markAsTouched();
       });
@@ -181,7 +183,6 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
             registrationDate = new Date(result.customer.registrationDate.toString());
           }
 
-          // Update the customer model
           this.customer = {
             name: result.customer.name,
             email: result.customer.email,
@@ -194,7 +195,6 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
           this.showModal();
         });
     } else {
-      // Reset customer model for new customer
       this.customer = {
         name: '',
         email: '',
@@ -221,7 +221,9 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
   }
   
   cancel(): void {
-    // Reset customer model
+      this.hideModal();
+
+   setTimeout(() => {
     this.customer = {
       name: '',
       email: '',
@@ -230,11 +232,16 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
       address: ''
     };
     
+
+    if (this.customerForm) {
+      this.customerForm.resetForm();
+    }
+    
     this.currentCustomerId = null;
     this.isEditMode = false;
     this.saving = false;
     this.selectedUserIds = [];
-    this.hideModal();
+  }, 300);
   }
 
  getUserNameById(userId: number): string {

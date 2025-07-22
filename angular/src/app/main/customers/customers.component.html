@@ -163,7 +163,7 @@
   aria-hidden="true">
   <div class="modal-dialog" role="document" style="max-width: 800px;height: 80vh; ">
     <div class="modal-content">
-      <div class="modal-header linearGrad p-2">
+      <div class="modal-header linearGrad ">
         <h5 class="modal-title text-white" id="customerModalLabel">{{ isEditMode ? 'Edit Customer and Users' :
           'Create
           New
@@ -183,7 +183,7 @@
                   <input type="text" class="form-control" id="name" name="name" [(ngModel)]="customer.name"
                     #name="ngModel" required (blur)="customer.name = customer.name?.trim()">
                   <div *ngIf="name.invalid && name.touched" class="text-danger">
-                    <small *ngIf="name.errors?.['required']">Name is required</small>
+                    <small *ngIf="name.errors?.['required']">Customer Name is required</small>
                   </div>
                 </div>
               </div>
@@ -193,7 +193,7 @@
                   <input type="email" class="form-control" id="email" name="email" [(ngModel)]="customer.email"
                     #email="ngModel" required email (blur)="customer.email = customer.email?.trim()">
                   <div *ngIf="email.invalid && email.touched" class="text-danger">
-                    <small *ngIf="email.errors?.['required']">Email is required</small>
+                    <small *ngIf="email.errors?.['required']">Email is required...!</small>
                     <small *ngIf="email.errors?.['email']">Please enter a valid email</small>
                   </div>
                 </div>
@@ -213,13 +213,12 @@
                     #phoneNo="ngModel" pattern="[0-9+\-\s()]*" required
                     (blur)="customer.phoneNo = customer.phoneNo?.trim()">
                   <div *ngIf="phoneNo.invalid && phoneNo.touched" class="text-danger">
-                    <small *ngIf="phoneNo.errors?.['required']">Phone number is required</small>
+                    <small *ngIf="phoneNo.errors?.['required']">Phone number is required...!</small>
                     <small *ngIf="phoneNo.errors?.['pattern']">!...Invalid</small>
                   </div>
                 </div>
               </div>
 
-              <!-- new dropdown  -->
               <div class="col-md-6 mb-3">
                 <label class="">Add Users <span class="text-danger">*</span></label>
                 <div class="input-group">
