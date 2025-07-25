@@ -181,7 +181,7 @@
                 <div class="form-group">
                   <label for="name">Name<span class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="name" name="name" [(ngModel)]="customer.name"
-                    #name="ngModel" required (blur)="customer.name = customer.name?.trim()">
+                    #name="ngModel" required (blur)="customer.name = customer.name?.trim()" placeholder="Enter Name">
                   <div *ngIf="name.invalid && name.touched" class="text-danger">
                     <small *ngIf="name.errors?.['required']">Customer Name is required</small>
                   </div>
@@ -191,7 +191,8 @@
                 <div class="form-group">
                   <label for="email">Email<span class="text-danger">*</span></label>
                   <input type="email" class="form-control" id="email" name="email" [(ngModel)]="customer.email"
-                    #email="ngModel" required email (blur)="customer.email = customer.email?.trim()">
+                    #email="ngModel" required email (blur)="customer.email = customer.email?.trim()"
+                    placeholder="Enter Email ">
                   <div *ngIf="email.invalid && email.touched" class="text-danger">
                     <small *ngIf="email.errors?.['required']">Email is required...!</small>
                     <small *ngIf="email.errors?.['email']">Please enter a valid email</small>
@@ -211,7 +212,7 @@
                   <label for="phoneNo">Phone No <span class="text-danger">*</span></label>
                   <input type="tel" class="form-control" id="phoneNo" name="phoneNo" [(ngModel)]="customer.phoneNo"
                     #phoneNo="ngModel" pattern="[0-9+\-\s()]*" required
-                    (blur)="customer.phoneNo = customer.phoneNo?.trim()">
+                    (blur)="customer.phoneNo = customer.phoneNo?.trim()" placeholder="Enter Phone Number ">
                   <div *ngIf="phoneNo.invalid && phoneNo.touched" class="text-danger">
                     <small *ngIf="phoneNo.errors?.['required']">Phone number is required...!</small>
                     <small *ngIf="phoneNo.errors?.['pattern']">!...Invalid</small>
@@ -255,11 +256,10 @@
               <div class="col-md-12">
                 <div class="form-group">
                   <label for="address">Address</label>
-                  <textarea class="form-control" id="address" name="address" [(ngModel)]="customer.address"
-                    rows="3"></textarea>
+                  <textarea class="form-control" id="address" placeholder="Enter Address " name="address"
+                    [(ngModel)]="customer.address" rows="3"></textarea>
                 </div>
               </div>
-
 
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
