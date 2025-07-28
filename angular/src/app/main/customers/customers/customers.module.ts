@@ -6,6 +6,7 @@ import { CustomersComponent } from '../customers.component';
 import { AppSharedModule } from '@app/shared/app-shared.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CustomerServiceProxy } from '@shared/service-proxies/service-proxies';
+import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 
 
 @NgModule({
@@ -15,7 +16,8 @@ import { CustomerServiceProxy } from '@shared/service-proxies/service-proxies';
     ReactiveFormsModule,
     CommonModule,
     CustomersRoutingModule,
-    AppSharedModule
+    AppSharedModule,
+   NgMultiSelectDropDownModule.forRoot()
     
   ],
   providers: [

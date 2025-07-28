@@ -21,6 +21,7 @@ import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { AppConsts } from '@shared/AppConsts';
 import { HttpClient } from '@angular/common/http';
 import { NgForm } from '@angular/forms';
+import { IDropdownSettings } from 'ng-multiselect-dropdown';
 
 declare var $: any;
 
@@ -85,7 +86,7 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
       });
       return;
     }
-
+    
     this.saving = true;
     const customerDto = new CreateOrEditCustomerDto();
     customerDto.id = this.currentCustomerId || undefined;
@@ -97,7 +98,8 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
       
     customerDto.address = this.customer.address;
     customerDto.userIds = this.selectedUserIds;
-
+   console.log("saving users ", customerDto.userIds)
+   
     this._customerService.createOrEdit(customerDto)
       .pipe(finalize(() => this.saving = false))
       .subscribe(() => {
@@ -112,39 +114,119 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
       });
   }
 
+  dropdownSettings: IDropdownSettings = {
+    singleSelection: false,
+    idField: 'id',
+    textField: 'displayText',
+    selectAllText: 'Select All',
+    unSelectAllText: 'Unselect All',
+    searchPlaceholderText: 'Search users...',
+    allowSearchFilter: true,
+    maxHeight: 300,
+    itemsShowLimit: 3,
+    closeDropDownOnSelection: false
+
+  };
+
+onItemSelect(item: any) {
+  this.selectedUserIds.push(item.id);
+}
+
+onDeSelect(item: any) {
+  this.selectedUserIds = this.selectedUserIds.filter(id => id !== item.id);
+}
+
+onSelectAll(items: any) {
+  this.selectedUserIds = items.map((item: any) => item.id);
+}
+
+onDeSelectAll() {
+  this.selectedUserIds = [];
+}
+
    updateAvailableUsers(): void {
-   
-    this._customerService.getUnassignedUsers()
-      .subscribe(result => {
-        this.availableUsers = result;
+     this._customerService.getUnassignedUsers()
+     .subscribe(result => {
+       this.availableUsers = result.map(user => ({
+         ...user,
+         displayText: `${user.userName} (${user.name} ${user.surname})` 
+        }as any));
         
         if (this.isEditMode && this.selectedUserIds.length > 0) {
-          const currentlyAssignedUsers = this.allUsers.filter(user => 
+          const currentlyAssignedUsers = this.allUsers.filter(user =>
             this.selectedUserIds.includes(user.id)
           );
-          
+        
           currentlyAssignedUsers.forEach(assignedUser => {
             if (!this.availableUsers.find(u => u.id === assignedUser.id)) {
-              this.availableUsers.push(assignedUser);
+              this.availableUsers.push({
+              ...assignedUser,
+              displayText: `${assignedUser.userName} (${assignedUser.name} ${assignedUser.surname})`
+            }as any);
             }
           });
         }
-      });
+  
+     });
   }
 
-  onUserCheckboxChange(userId: number, event: any): void {
-    const isChecked = event.target.checked;
-    if (isChecked) {
-      if (!this.selectedUserIds.includes(userId)) {
-        this.selectedUserIds.push(userId);
-      }
+
+  show(id: number | null): void {
+    this.currentCustomerId = id;
+    this.isEditMode = id !== null;
+    this.selectedUserIds = [];
+    if (id) {
+      this.saving = true;
+      this._customerService.getCustomerForEdit(id)
+        .pipe(finalize(() => this.saving = false))
+        .subscribe(result => {
+            
+          let registrationDate = null;
+          if (result.customer.registrationDate) {
+            registrationDate = new Date(result.customer.registrationDate.toString());
+          }
+          
+          this.customer = {
+            name: result.customer.name,
+            email: result.customer.email,
+            registrationDate: registrationDate,
+            phoneNo: result.customer.phoneNo,
+            address: result.customer.address
+          };
+          this.selectedUserIds = result.assignedUserIds || [];
+          this.updateAvailableUsers();
+          this.showModal();
+        });
     } else {
-      const index = this.selectedUserIds.indexOf(userId);
-      if (index > -1) {
-        this.selectedUserIds.splice(index, 1);
-      }
+      this.customer = {
+        name: '',
+        email: '',
+        registrationDate: null,
+        phoneNo: '',
+        address: ''
+      };
+      this.updateAvailableUsers();
+      this.showModal();
+      this.selectedUserIds=[]
     }
   }
+
+
+
+
+  // onUserCheckboxChange(userId: number, event: any): void {
+  //   const isChecked = event.target.checked;
+  //   if (isChecked) {
+  //     if (!this.selectedUserIds.includes(userId)) {
+  //       this.selectedUserIds.push(userId);
+  //     }
+  //   } else {
+  //     const index = this.selectedUserIds.indexOf(userId);
+  //     if (index > -1) {
+  //       this.selectedUserIds.splice(index, 1);
+  //     }
+  //   }
+  // }
   
   loadAllUsers(): void {
   const url = AppConsts.remoteServiceBaseUrl + '/api/services/app/User/GetUsers';
@@ -164,48 +246,6 @@ export class CustomersComponent extends AppComponentBase implements OnInit {
       console.error('Error loading users:', error);
     });
  }
-
-  show(id: number | null): void {
-    this.currentCustomerId = id;
-    this.isEditMode = id !== null;
-    this.selectedUserIds = [];
-
-    if (id) {
-      this.saving = true;
-      this._customerService.getCustomerForEdit(id)
-        .pipe(finalize(() => this.saving = false))
-        .subscribe(result => {
-
-          this.selectedUserIds = result.assignedUserIds || [];
-
-          let registrationDate = null;
-          if (result.customer.registrationDate) {
-            registrationDate = new Date(result.customer.registrationDate.toString());
-          }
-
-          this.customer = {
-            name: result.customer.name,
-            email: result.customer.email,
-            registrationDate: registrationDate,
-            phoneNo: result.customer.phoneNo,
-            address: result.customer.address
-          };
-          
-          this.updateAvailableUsers();
-          this.showModal();
-        });
-    } else {
-      this.customer = {
-        name: '',
-        email: '',
-        registrationDate: null,
-        phoneNo: '',
-        address: ''
-      };
-      this.updateAvailableUsers();
-      this.showModal();
-    }
-  }
 
   private showModal(): void {
     setTimeout(() => {
@@ -397,5 +437,9 @@ filterUsers(): void {
     this.closeViewModal();
     this.show(this.viewCustomer.id);
   }
+
+
+
+  
 
 }

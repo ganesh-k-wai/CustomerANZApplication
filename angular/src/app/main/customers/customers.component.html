@@ -211,16 +211,18 @@
                 <div class="form-group">
                   <label for="phoneNo">Phone No <span class="text-danger">*</span></label>
                   <input type="tel" class="form-control" id="phoneNo" name="phoneNo" [(ngModel)]="customer.phoneNo"
-                    #phoneNo="ngModel" pattern="[0-9+\-\s()]*" required
+                    #phoneNo="ngModel" pattern="[0-9+\-\s()]*" required maxlength="15" minlength="10"
                     (blur)="customer.phoneNo = customer.phoneNo?.trim()" placeholder="Enter Phone Number ">
                   <div *ngIf="phoneNo.invalid && phoneNo.touched" class="text-danger">
                     <small *ngIf="phoneNo.errors?.['required']">Phone number is required...!</small>
                     <small *ngIf="phoneNo.errors?.['pattern']">!...Invalid</small>
+                    <small *ngIf="phoneNo.errors?.['maxlength']">!...Invalid</small>
+                    <small *ngIf="phoneNo.errors?.['minlength']">!...Invalid</small>
                   </div>
                 </div>
               </div>
 
-              <div class="col-md-6 mb-3">
+              <!-- <div class="col-md-6 mb-3">
                 <label class="">Add Users <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <div class="dropdown w-100">
@@ -251,7 +253,18 @@
 
                   </div>
                 </div>
+              </div> -->
+
+              <div class="col-md-6 mb-3">
+                <label>Add Users <span class="text-danger">*</span></label>
+                <ng-multiselect-dropdown [placeholder]="'Select Assigned Users'" [data]="availableUsers"
+                  [(ngModel)]="selectedUserIds" [settings]="dropdownSettings" (onSelect)="onItemSelect($event)"
+                  (onDeSelect)="onDeSelect($event)" (onSelectAll)="onSelectAll($event)"
+                  (onDeSelectAll)="onDeSelectAll()">>
+                </ng-multiselect-dropdown>
+
               </div>
+
 
               <div class="col-md-12">
                 <div class="form-group">

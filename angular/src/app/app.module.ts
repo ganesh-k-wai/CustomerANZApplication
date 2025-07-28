@@ -95,6 +95,7 @@ import { NgxSpinnerModule, NgxSpinnerComponent } from 'ngx-spinner';
 import { ScrollTopComponent } from './shared/layout/scroll-top.component';
 import { AppBsModalModule } from '@shared/common/appBsModal/app-bs-modal.module';
 import { SubheaderModule } from './shared/common/sub-header/subheader.module';
+import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 
 @NgModule({
     declarations: [
@@ -182,6 +183,7 @@ import { SubheaderModule } from './shared/common/sub-header/subheader.module';
         NgxSpinnerModule,
         AppBsModalModule,
         SubheaderModule,
+        NgMultiSelectDropDownModule.forRoot()
     ],
     providers: [
         ImpersonationService,
